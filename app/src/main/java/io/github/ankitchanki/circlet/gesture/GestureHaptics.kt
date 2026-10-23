@@ -8,9 +8,10 @@ import android.os.Vibrator
 import android.os.VibratorManager
 
 /**
- * Rising haptic texture for the corner swipe: light ticks that get stronger as progress grows,
- * then a crisp double-tap "confirm" on activation. Uses haptic primitives where the vibrator
- * supports them and falls back to predefined effects / short one-shots on older hardware.
+ * Fine-grained haptic texture for the corner swipe: a dial-like tick every few dp, stronger as
+ * progress grows and softer when pulling back, then a crisp double-tap "confirm" on activation.
+ * Uses haptic primitives where supported, otherwise amplitude-scaled one-shots, otherwise the
+ * predefined tick.
  */
 class GestureHaptics(context: Context) {
     private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -23,13 +24,16 @@ class GestureHaptics(context: Context) {
 
     private val primitivesSupported: Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && vibrator?.areAllPrimitivesSupported(
-            VibrationEffect.Composition.PRIMITIVE_LOW_TICK,
+            VibrationEffect.Composition.PRIMITIVE_TICK,
             VibrationEffect.Composition.PRIMITIVE_CLICK,
         ) == true
 
+    /** Many motors without primitives (common on Xiaomi) can still scale a short pulse. */
+    private val amplitudeControl: Boolean = vibrator?.hasAmplitudeControl() == true
+
     fun onProgress(progress: Float) {
-        val step = steps.onProgress(progress) ?: return
-        tick(steps.intensity(step))
+        val crossed = steps.onProgress(progress) ?: return
+        tick(steps.intensity(crossed))
     }
 
     fun reset() = steps.reset()
@@ -53,11 +57,13 @@ class GestureHaptics(context: Context) {
         val effect = when {
             primitivesSupported && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ->
                 VibrationEffect.startComposition()
-                    .addPrimitive(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, intensity)
+                    .addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, intensity)
                     .compose()
+            amplitudeControl ->
+                VibrationEffect.createOneShot(TICK_MS, (MIN_AMPLITUDE + (255 - MIN_AMPLITUDE) * intensity).toInt().coerceIn(1, 255))
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
                 VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
-            else -> VibrationEffect.createOneShot(6, (40 + 160 * intensity).toInt().coerceIn(1, 255))
+            else -> VibrationEffect.createOneShot(TICK_MS, VibrationEffect.DEFAULT_AMPLITUDE)
         }
         vibrate(effect)
     }
@@ -74,7 +80,10 @@ class GestureHaptics(context: Context) {
     }
 
     companion object {
-        private const val STEPS = 12
+        /** One tick about every 6dp of the 140dp activation travel. */
+        private const val STEPS = 24
         private const val CONFIRM_GAP_MS = 70
+        private const val TICK_MS = 8L
+        private const val MIN_AMPLITUDE = 50
     }
 }

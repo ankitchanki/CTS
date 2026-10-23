@@ -23,7 +23,7 @@ Forked from [parallelcc/MiCTS](https://github.com/parallelcc/micts) (GPL-3.0). C
 | 🌈 **Corner swipe gesture** | Swipe inward at about 45° from just above the bottom-left or bottom-right corner. Progress follows your finger; let go early and everything springs back. |
 | ✨ **Pixel-style animation** | Corner handle lines turn into a blue/red/yellow/green crescent beam. The screen recesses to 0.96 into a rounded card, and a white shimmer flashes when it locks. |
 | 🔆 **Edge glow** | A rotating, breathing rainbow glow around the screen edges (in the spirit of Apple Intelligence) that grows with the swipe and swells on activation. |
-| 📳 **Rising haptics** | 12 ticks that get stronger as you swipe, then a crisp double-tap confirm. Uses the vibrator's haptic primitives when available. |
+| 📳 **Rising haptics** | A fine, dial-like tick about every 6dp (24 detents) that gets stronger as you swipe and softer when you pull back, then a crisp double-tap confirm. Uses haptic primitives, or amplitude-scaled pulses on motors without them. |
 | 🔍 **Native Circle to Search** | Opens Google's own Circle to Search, from the same activity as the app icon. |
 | 🚫 **Stops Gemini stealing the swipe** | Optionally turns off Android's own corner-assistant gesture while Circlet's gesture is on, and restores it afterwards. |
 | 🛡️ **Shizuku, not root** | Overlay permission, the frozen frame for the animation and system settings go through Shizuku. No hooks, no LSPosed. |
