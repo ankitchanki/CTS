@@ -103,6 +103,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /** Lines found by the assistant-gesture settings search; null while no report is shown. */
+    private val _assistSettingsReport = MutableStateFlow<List<String>?>(null)
+    val assistSettingsReport: StateFlow<List<String>?> = _assistSettingsReport
+
+    fun findAssistGestureSettings() {
+        viewModelScope.launch {
+            _assistSettingsReport.value = AssistGestureBlocker.findCandidateSettings() ?: emptyList()
+        }
+    }
+
+    fun dismissAssistSettingsReport() {
+        _assistSettingsReport.value = null
+    }
+
     fun setGoogleAsAssistant() {
         viewModelScope.launch {
             _assistantResult.value = ShizukuManager.setGoogleAsAssistant()

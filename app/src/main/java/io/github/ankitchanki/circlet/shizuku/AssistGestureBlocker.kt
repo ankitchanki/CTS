@@ -47,6 +47,23 @@ object AssistGestureBlocker {
         return if (gesture && wantBlock) block(context) else restore(context)
     }
 
+    /**
+     * Read-only diagnostic for launchers that ignore [SETTING] (e.g. HyperOS): lists every secure,
+     * global and system setting whose name looks like an assistant / corner gesture, so the right
+     * key can be found. Returns null if Shizuku isn't available.
+     */
+    suspend fun findCandidateSettings(): List<String>? {
+        if (!ShizukuManager.isGranted) return null
+        val pattern = Regex("assist|gemini|corner|omni|circle_to|voice_key|gesture_shortcut", RegexOption.IGNORE_CASE)
+        return listOf("secure", "global", "system").flatMap { namespace ->
+            val listing = ShizukuManager.execOutput("settings list $namespace").orEmpty()
+            listing.lineSequence()
+                .filter { line -> pattern.containsMatchIn(line.substringBefore('=')) }
+                .map { "$namespace: $it" }
+                .toList()
+        }
+    }
+
     private fun prefs(context: Context) =
         context.getSharedPreferences(AppConfig.CONFIG_NAME, Context.MODE_PRIVATE)
 }

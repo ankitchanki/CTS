@@ -74,7 +74,8 @@ On Android 15+ with Shizuku running **as root**, **System trigger service → CS
   - `CSService`: Android 15+. Needs Shizuku **started with root**, because the shell user lacks `ACCESS_CONTEXTUAL_SEARCH`, and a phone whose system has the contextual search service. Falls back to `VIS` otherwise.
 - **Set Google as default assistant**: one tap through Shizuku.
 - **Corner swipe gesture**: shows the corner zones.
-- **Stop Gemini on corner swipe**: turns off Android's corner-assistant gesture while Circlet's gesture is on, and restores your setting when you turn it off.
+- **Stop Gemini on corner swipe**: turns off Android's corner-assistant gesture while Circlet's gesture is on, and restores your setting when you turn it off. Pixel/AOSP launchers only.
+- **Find launcher assistant setting**: read-only search for assistant or corner gesture settings on your phone, with a Copy button.
 - **App settings**: launch and tile delays, vibration, async trigger, language.
 
 ## Troubleshooting
@@ -83,7 +84,7 @@ On Android 15+ with Shizuku running **as root**, **System trigger service → CS
 | --- | --- |
 | Swipe opens Google Lens, the icon opens Circle to Search | Fixed in v1.4.0: the swipe now triggers from the same activity as the icon. |
 | Touching a corner opens Recents | Start the swipe slightly above the navigation bar; the zones sit there since v1.3.0. |
-| Corner swipe opens Gemini | Keep *Stop Gemini on corner swipe* on. If your launcher has its own "swipe from corner for assistant" setting, turn that off. |
+| Corner swipe opens Gemini | *Stop Gemini on corner swipe* changes the AOSP/Pixel setting, which HyperOS, One UI and some other launchers ignore. Turn off the launcher's own corner-assistant option in phone settings (on HyperOS look under *Additional settings → Gesture shortcuts* and the full-screen gesture settings), and start Circlet's swipe slightly above the navigation bar. **Find launcher assistant setting** in Circlet lists the matching system keys (read-only); please share the result in an issue so Circlet can switch your launcher's key automatically. |
 | Icon opens Gemini, not Circle to Search | Circle to Search isn't enabled for your phone; see [phones without native Circle to Search](#phones-without-native-circle-to-search). |
 | No recessed-card animation | Grant Shizuku: the frozen frame comes from a Shizuku screenshot. Circle to Search still opens without it. |
 | Update won't install over the old version | Builds before signed releases used a temporary key. Uninstall once, then install the signed release. |

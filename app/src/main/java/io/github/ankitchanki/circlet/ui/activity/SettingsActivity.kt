@@ -1,5 +1,7 @@
 package io.github.ankitchanki.circlet.ui.activity
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
@@ -17,6 +19,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -49,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
@@ -410,7 +415,53 @@ fun SettingsPage(
                 )
             }
         )
+
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.find_assist_settings)) },
+            supportingContent = {
+                Text(stringResource(if (shizukuGranted) R.string.find_assist_settings_summary else R.string.requires_shizuku))
+            },
+            trailingContent = {
+                TextButton(enabled = shizukuGranted, onClick = { viewModel.findAssistGestureSettings() }) {
+                    Text(stringResource(R.string.find))
+                }
+            }
+        )
     }
+
+    val report by viewModel.assistSettingsReport.collectAsState()
+    report?.let { lines -> AssistSettingsReportDialog(lines) { viewModel.dismissAssistSettingsReport() } }
+}
+
+/** Shows what the assistant-gesture settings search found, with a button to copy it. */
+@Composable
+fun AssistSettingsReportDialog(lines: List<String>, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val text = if (lines.isEmpty()) stringResource(R.string.find_assist_settings_none) else lines.joinToString("\n")
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.find_assist_settings)) },
+        text = {
+            SelectionContainer {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val clipboard = context.getSystemService(ClipboardManager::class.java)
+                clipboard?.setPrimaryClip(ClipData.newPlainText("Circlet assistant settings", text))
+            }) {
+                Text(stringResource(R.string.copy))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+        }
+    )
 }
 
 @Composable
