@@ -62,15 +62,34 @@ class CornerGestureController(
     private var animator: ValueAnimator? = null
     /** True from activation or release until the effects layer is gone; new touches are ignored. */
     private var busy = false
+    /** No gesture, animation or effects layer in flight. */
+    val isIdle: Boolean
+        get() = !busy && effectsView == null
+
+    /** How far above the bottom edge the zones sit (navigation bar / gesture strip height). */
+    private var bottomInset = 0
 
     fun attach() {
         if (cornerViews.isNotEmpty()) return
+        bottomInset = OverlayWindows.bottomSystemInset(context)
         val size = dp(ZONE_SIZE_DP).toInt()
         for (gravity in intArrayOf(Gravity.START, Gravity.END)) {
-            val view = CornerTouchView(context, ::onCornerTouch)
-            runCatching { windowManager.addView(view, OverlayWindows.cornerZone(size, gravity)) }
+            val view = CornerTouchView(context, ::onCornerTouch).apply { tag = gravity }
+            runCatching { windowManager.addView(view, OverlayWindows.cornerZone(size, gravity, bottomInset)) }
                 .onSuccess { cornerViews += view }
                 .onFailure { e -> Log.e(TAG, "adding corner window failed", e) }
+        }
+    }
+
+    /** Re-positions the zones after rotation or a navigation mode change. */
+    fun relayout() {
+        if (cornerViews.isEmpty()) return
+        val inset = OverlayWindows.bottomSystemInset(context)
+        if (inset == bottomInset) return
+        bottomInset = inset
+        val size = dp(ZONE_SIZE_DP).toInt()
+        cornerViews.forEach { view ->
+            runCatching { windowManager.updateViewLayout(view, OverlayWindows.cornerZone(size, view.tag as Int, inset)) }
         }
     }
 
@@ -89,7 +108,7 @@ class CornerGestureController(
             MotionEvent.ACTION_DOWN -> {
                 if (busy) return false
                 val bounds = OverlayWindows.screenBounds(context)
-                if (!tracker.onDown(event.rawX, event.rawY, bounds.width().toFloat(), bounds.height().toFloat())) {
+                if (!tracker.onDown(event.rawX, event.rawY, bounds.width().toFloat(), bounds.height().toFloat(), bottomInset.toFloat())) {
                     return false
                 }
                 startGesture(tracker.state.corner!!)
@@ -105,13 +124,14 @@ class CornerGestureController(
      * Plays the whole invocation without a swipe (progress animates to 1 on its own), e.g. when
      * Circlet is launched as the default assistant by the system's own gesture.
      */
-    fun invoke(corner: Corner = Corner.BottomRight) {
-        if (busy || effectsView != null) return
+    /** Returns false when nothing was started (already busy, or the effects layer failed). */
+    fun invoke(corner: Corner = Corner.BottomRight): Boolean {
+        if (busy || effectsView != null) return false
         busy = true
         startGesture(corner)
         val view = effectsView ?: run {
             busy = false
-            return
+            return false
         }
         scope.launch {
             animate(AUTO_PROGRESS_MS) { t ->
@@ -121,6 +141,7 @@ class CornerGestureController(
             }
             onActivated()
         }
+        return true
     }
 
     private fun startGesture(corner: Corner) {

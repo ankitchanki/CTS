@@ -94,3 +94,28 @@ class CornerGestureTrackerTest {
         assertEquals(GesturePhase.Tracking, tracker.onMove(20f + 100f, h - 20f - 173f).phase)
     }
 }
+
+class CornerZoneInsetTest {
+    private val w = 1080f
+    private val h = 2400f
+    private val inset = 132f
+
+    @Test
+    fun zonesSitAboveTheNavigationBar() {
+        // Inside the nav bar / gesture strip: not ours, the system owns it.
+        assertNull(CornerVectorMath.cornerAt(10f, h - 10f, w, h, 100f, inset))
+        // Just above it: ours.
+        assertEquals(Corner.BottomLeft, CornerVectorMath.cornerAt(10f, h - inset - 10f, w, h, 100f, inset))
+        assertEquals(Corner.BottomRight, CornerVectorMath.cornerAt(w - 10f, h - inset - 10f, w, h, 100f, inset))
+        assertNull(CornerVectorMath.cornerAt(10f, h - inset - 100f, w, h, 100f, inset))
+    }
+
+    @Test
+    fun progressStartsAtZeroAboveTheInset() {
+        val tracker = CornerGestureTracker(CornerGestureConfig(zoneSize = 100f, activationDistance = 400f, touchSlop = 20f))
+        assertTrue(tracker.onDown(20f, h - inset - 20f, w, h, inset))
+        val start = Vec2(20f, h - inset - 20f)
+        val half = start + CornerVectorMath.inwardDirection(Corner.BottomLeft) * 200f
+        assertEquals(0.5f, tracker.onMove(half.x, half.y).progress, 1e-3f)
+    }
+}

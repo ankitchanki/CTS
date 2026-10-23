@@ -24,10 +24,13 @@ data class Vec2(val x: Float, val y: Float) {
 object CornerVectorMath {
     private const val INV_SQRT2 = 0.70710677f
 
-    /** The physical screen corner a gesture is measured from. */
-    fun cornerOrigin(corner: Corner, screenWidth: Float, screenHeight: Float): Vec2 = when (corner) {
-        Corner.BottomLeft -> Vec2(0f, screenHeight)
-        Corner.BottomRight -> Vec2(screenWidth, screenHeight)
+    /**
+     * The corner a gesture is measured from. [bottomInset] lifts it above the navigation bar /
+     * gesture strip, where the zones sit so the system doesn't take the touch.
+     */
+    fun cornerOrigin(corner: Corner, screenWidth: Float, screenHeight: Float, bottomInset: Float = 0f): Vec2 = when (corner) {
+        Corner.BottomLeft -> Vec2(0f, screenHeight - bottomInset)
+        Corner.BottomRight -> Vec2(screenWidth, screenHeight - bottomInset)
     }
 
     /** Unit vector pointing inward and upward at 45° from the corner, toward the screen centre. */
@@ -36,9 +39,13 @@ object CornerVectorMath {
         Corner.BottomRight -> Vec2(-INV_SQRT2, -INV_SQRT2)
     }
 
-    /** Returns the corner whose [zoneSize] x [zoneSize] active square strictly contains the point, if any. */
-    fun cornerAt(x: Float, y: Float, screenWidth: Float, screenHeight: Float, zoneSize: Float): Corner? {
-        if (y <= screenHeight - zoneSize || y > screenHeight) return null
+    /**
+     * Returns the corner whose [zoneSize] x [zoneSize] active square strictly contains the point, if
+     * any. The squares sit [bottomInset] above the bottom edge.
+     */
+    fun cornerAt(x: Float, y: Float, screenWidth: Float, screenHeight: Float, zoneSize: Float, bottomInset: Float = 0f): Corner? {
+        val bottom = screenHeight - bottomInset
+        if (y <= bottom - zoneSize || y > bottom) return null
         return when {
             x >= 0f && x < zoneSize -> Corner.BottomLeft
             x > screenWidth - zoneSize && x <= screenWidth -> Corner.BottomRight

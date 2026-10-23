@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.IBinder
@@ -48,12 +49,14 @@ class GestureOverlayService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (cornersEnabled(this)) controller.attach()
-        if (intent?.action == ACTION_INVOKE && session == null) {
-            controller.invoke()
-        } else if (!cornersEnabled(this) && session == null) {
-            stopSelf()
-        }
+        val invoked = intent?.action == ACTION_INVOKE && session == null && controller.invoke()
+        if (!invoked) stopIfIdle()
         return if (cornersEnabled(this)) START_STICKY else START_NOT_STICKY
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        controller.relayout()
     }
 
     override fun onDestroy() {
@@ -75,6 +78,7 @@ class GestureOverlayService : Service() {
                 // No screenshot (Shizuku missing or capture failed). Don't fall back to the
                 // assistant trigger here: on many devices that opens Gemini instead.
                 Toast.makeText(this, R.string.lasso_needs_shizuku, Toast.LENGTH_LONG).show()
+                stopIfIdle()
                 return
             }
             val newSession = CircleToSearchSession(this, scope, frame) {
@@ -100,7 +104,7 @@ class GestureOverlayService : Service() {
 
     /** Started only for an assistant invocation: go away once it is over. */
     private fun stopIfIdle() {
-        if (!cornersEnabled(this) && session == null) stopSelf()
+        if (!cornersEnabled(this) && session == null && controller.isIdle) stopSelf()
     }
 
     private fun startForegroundCompat() {

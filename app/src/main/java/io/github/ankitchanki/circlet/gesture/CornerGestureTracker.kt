@@ -43,14 +43,17 @@ class CornerGestureTracker(private val config: CornerGestureConfig) {
     var state: GestureState = GestureState.IDLE
         private set
 
-    /** Returns true if the touch started inside a corner zone and the gesture is now tracked. */
-    fun onDown(x: Float, y: Float, screenWidth: Float, screenHeight: Float): Boolean {
-        val corner = CornerVectorMath.cornerAt(x, y, screenWidth, screenHeight, config.zoneSize)
+    /**
+     * Returns true if the touch started inside a corner zone and the gesture is now tracked.
+     * [bottomInset] is how far above the bottom edge the zones sit.
+     */
+    fun onDown(x: Float, y: Float, screenWidth: Float, screenHeight: Float, bottomInset: Float = 0f): Boolean {
+        val corner = CornerVectorMath.cornerAt(x, y, screenWidth, screenHeight, config.zoneSize, bottomInset)
         if (corner == null) {
             state = GestureState.IDLE
             return false
         }
-        origin = CornerVectorMath.cornerOrigin(corner, screenWidth, screenHeight)
+        origin = CornerVectorMath.cornerOrigin(corner, screenWidth, screenHeight, bottomInset)
         direction = CornerVectorMath.inwardDirection(corner)
         down = Vec2(x, y)
         startDistance = (down - origin).length

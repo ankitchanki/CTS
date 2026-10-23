@@ -5,6 +5,7 @@ import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.os.Build
 import android.view.Gravity
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams
 
@@ -15,11 +16,35 @@ object OverlayWindows {
         LayoutParams.FLAG_LAYOUT_NO_LIMITS or
         LayoutParams.FLAG_HARDWARE_ACCELERATED
 
-    /** Small touchable square in a bottom corner that receives the start of the swipe. */
-    fun cornerZone(sizePx: Int, gravity: Int) = base(sizePx, sizePx).apply {
+    /**
+     * Small touchable square in a bottom corner that receives the start of the swipe, lifted
+     * [bottomOffsetPx] above the bottom edge so it doesn't sit under the navigation bar.
+     */
+    fun cornerZone(sizePx: Int, gravity: Int, bottomOffsetPx: Int) = base(sizePx, sizePx).apply {
         flags = baseFlags or LayoutParams.FLAG_NOT_FOCUSABLE or LayoutParams.FLAG_NOT_TOUCH_MODAL
         this.gravity = Gravity.BOTTOM or gravity
+        y = bottomOffsetPx
         title = "Circlet corner"
+    }
+
+    /**
+     * Height of the bottom strip the system owns: the navigation bar (3-button) or the gesture
+     * handle area. Overlay windows sit below the navigation bar layer, so touches there go to the
+     * system (e.g. the Recents button) instead of the corner zones.
+     */
+    fun bottomSystemInset(context: Context): Int {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            runCatching {
+                val insets = context.getSystemService(WindowManager::class.java).currentWindowMetrics.windowInsets
+                return insets.getInsetsIgnoringVisibility(
+                    WindowInsets.Type.navigationBars() or WindowInsets.Type.mandatorySystemGestures()
+                ).bottom
+            }
+        }
+        val res = context.resources
+        @Suppress("DiscouragedApi", "InternalInsetResource")
+        val id = res.getIdentifier("navigation_bar_height", "dimen", "android")
+        return if (id != 0) res.getDimensionPixelSize(id) else 0
     }
 
     /** Full-screen drawing layer for the animation; never intercepts touches. */

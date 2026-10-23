@@ -70,7 +70,9 @@ class InvocationSequence(
     /** The system's assist screenshot; null when the user turned "Use screenshot" off. */
     fun onSystemScreenshot(screenshot: Bitmap?) {
         // Software copy: the system bitmap may be hardware-backed or recycled after the callback.
-        systemFrame.complete(screenshot?.let { runCatching { it.copy(Bitmap.Config.ARGB_8888, false) }.getOrNull() })
+        val copy = screenshot?.let { runCatching { it.copy(Bitmap.Config.ARGB_8888, false) }.getOrNull() }
+        // Arrived after the timeout (a Shizuku capture is already in use): drop it.
+        if (!systemFrame.complete(copy)) copy?.recycle()
     }
 
     private suspend fun playInvocation(captured: Bitmap) {
