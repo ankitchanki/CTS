@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="40" viewBox="0 0 300 40">
-  <!-- Hint shown when Circle to Search mode opens. SelectionOverlayView.drawHint (78% #202124, 15sp white). -->
-  <rect width="300" height="40" rx="20" fill="#202124" fill-opacity="0.78"/>
-  <text x="150" y="25.5" fill="#FFFFFF" font-family="Google Sans, Roboto, sans-serif" font-size="15" text-anchor="middle">Circle or draw a box to search</text>
-</svg>

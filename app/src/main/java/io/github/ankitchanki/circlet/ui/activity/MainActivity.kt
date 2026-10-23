@@ -1,5 +1,7 @@
 package io.github.ankitchanki.circlet.ui.activity
 
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -38,9 +40,11 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         val prefs = getSharedPreferences(CONFIG_NAME, MODE_PRIVATE)
+        val fromGesture = intent.getBooleanExtra(EXTRA_FROM_GESTURE, false)
         val key = if (intent.getBooleanExtra("from_tile", false)) KEY_TILE_DELAY else KEY_DEFAULT_DELAY
-        val delayMs = prefs.getLong(key, DEFAULT_CONFIG[key] as Long)
-        val vibrate = prefs.getBoolean(KEY_VIBRATE, DEFAULT_CONFIG[KEY_VIBRATE] as Boolean)
+        // The corner gesture already waited for its overlay to go and played its own haptics.
+        val delayMs = if (fromGesture) 0L else prefs.getLong(key, DEFAULT_CONFIG[key] as Long)
+        val vibrate = !fromGesture && prefs.getBoolean(KEY_VIBRATE, DEFAULT_CONFIG[KEY_VIBRATE] as Boolean)
 
         val triggerService = TriggerService.entries.getOrNull(
             prefs.getInt(KEY_TRIGGER_SERVICE, DEFAULT_CONFIG[KEY_TRIGGER_SERVICE] as Int)
@@ -57,5 +61,18 @@ class MainActivity : ComponentActivity() {
                 delayAndTrigger(delayMs, vibrate)
             }
         }
+    }
+
+    companion object {
+        private const val EXTRA_FROM_GESTURE = "from_gesture"
+
+        /** Started by the corner gesture so its trigger runs from an activity, like the app icon. */
+        fun gestureIntent(context: Context): Intent =
+            Intent(context, MainActivity::class.java)
+                .putExtra(EXTRA_FROM_GESTURE, true)
+                .addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+                        Intent.FLAG_ACTIVITY_NO_ANIMATION
+                )
     }
 }

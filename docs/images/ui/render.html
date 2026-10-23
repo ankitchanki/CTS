@@ -1,7 +1,7 @@
 <!doctype html><html><body style="margin:0;background:#fff">
 <canvas id="c"></canvas>
 <script>
-// Port of Circlet's overlay drawing (EffectsView, EdgeGlowRenderer, SelectionOverlayView) using the
+// Port of Circlet's overlay drawing (EffectsView, EdgeGlowRenderer) using the
 // same constants and curves as gesture/GestureVisuals.kt, for README renders.
 const W = 360, H = 780, DPR = 3;
 const BLUE='#4285F4', RED='#EA4335', YELLOW='#FBBC04', GREEN='#34A853';
@@ -72,18 +72,6 @@ function frame(ctx,app,{p=0,shimmer=null,boost=0,scaleOverride=null,live=false})
   }
   drawEdgeGlow(ctx,v.glow,boost);drawBeam(ctx,v,true);
 }
-function selection(ctx,app,{lasso=false,box=false}){
-  ctx.drawImage(app,0,0,W,H);
-  const pal=ctx.createLinearGradient(0,0,W,H);BEAM.forEach((c,i)=>pal.addColorStop(i/4,c));
-  if(lasso){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(0,0,W,H);
-    const path=new Path2D('M 200 168 C 110 150 30 200 40 268 C 50 340 190 384 290 352 C 350 330 346 230 300 190 C 268 164 226 160 214 176');
-    ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=pal;ctx.lineWidth=14;ctx.filter='blur(10px)';ctx.stroke(path);ctx.filter='none';ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.stroke(path);ctx.restore();}
-  if(box){const x=24,y=150,w=W-48,h=222,r=20;ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.roundRect(x,y,w,h,r);ctx.fillStyle='rgba(0,0,0,.45)';ctx.fill('evenodd');ctx.restore();
-    ctx.save();ctx.strokeStyle=pal;ctx.lineWidth=14;ctx.filter='blur(10px)';rrPath(ctx,x,y,w,h,r);ctx.stroke();ctx.filter='none';ctx.strokeStyle='#fff';ctx.lineWidth=5;rrPath(ctx,x,y,w,h,r);ctx.stroke();ctx.restore();}
-  if(!lasso&&!box){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(0,0,W,H);const t='Circle or draw a box to search';ctx.font='15px Roboto, sans-serif';const tw=ctx.measureText(t).width;
-    rr(ctx,W/2-tw/2-20,72,tw+40,40,20,'rgba(32,33,36,.78)');ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(t,W/2,97);ctx.textAlign='left'}
-  drawEdgeGlow(ctx,box?.3:.55);
-}
 function zones(ctx,app){ctx.drawImage(app,0,0,W,H);const z=40,y=H-NAV-z;
   ctx.fillStyle='rgba(32,33,36,.08)';ctx.fillRect(0,H-NAV,W,NAV);
   [[0,y],[W-z,y]].forEach(([x,yy])=>{ctx.fillStyle='rgba(66,133,244,.22)';ctx.fillRect(x,yy,z,z);ctx.setLineDash([4,3]);ctx.strokeStyle=BLUE;ctx.lineWidth=1.5;ctx.strokeRect(x+.75,yy+.75,z-1.5,z-1.5);ctx.setLineDash([])});
@@ -97,7 +85,7 @@ async function render(kind,opts){
   const c=document.getElementById('c');c.width=W*DPR;c.height=H*DPR;const ctx=c.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
   const app=document.createElement('canvas');app.width=W*DPR;app.height=H*DPR;const a=app.getContext('2d');a.setTransform(DPR,0,0,DPR,0,0);drawApp(a);
   ctx.save();rrPath(ctx,0,0,W,H,CORNER_R);ctx.clip();
-  if(kind==='frame')frame(ctx,app,opts);else if(kind==='selection')selection(ctx,app,opts);else zones(ctx,app);
+  if(kind==='frame')frame(ctx,app,opts);else zones(ctx,app);
   ctx.restore();return c.toDataURL('image/png');
 }
 window.render=render;

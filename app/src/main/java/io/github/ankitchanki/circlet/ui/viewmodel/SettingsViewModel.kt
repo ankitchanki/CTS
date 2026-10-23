@@ -14,7 +14,6 @@ import io.github.ankitchanki.circlet.config.AppConfig
 import io.github.ankitchanki.circlet.config.Language
 import io.github.ankitchanki.circlet.overlay.GestureOverlayService
 import io.github.ankitchanki.circlet.shizuku.AssistGestureBlocker
-import io.github.ankitchanki.circlet.trigger.AssistantRole
 import io.github.ankitchanki.circlet.shizuku.ShizukuManager
 import io.github.ankitchanki.circlet.shizuku.ShizukuStatus
 import kotlinx.coroutines.Dispatchers
@@ -36,9 +35,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _canDrawOverlays = MutableStateFlow(Settings.canDrawOverlays(application))
     val canDrawOverlays: StateFlow<Boolean> = _canDrawOverlays
 
-    private val _circletIsAssistant = MutableStateFlow(AssistantRole.isHeld(application))
-    val circletIsAssistant: StateFlow<Boolean> = _circletIsAssistant
-
     /** Result of the last "Set Google as default assistant" action, null if not run yet. */
     private val _assistantResult = MutableStateFlow<Boolean?>(null)
     val assistantResult: StateFlow<Boolean?> = _assistantResult
@@ -54,7 +50,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     var languageExpanded = mutableStateOf(false)
     var scrollState = ScrollState(0)
     var triggerServiceExpanded = mutableStateOf(false)
-    var gestureActionExpanded = mutableStateOf(false)
 
     init {
         appConfigPref = application.getSharedPreferences(AppConfig.CONFIG_NAME, MODE_PRIVATE)
@@ -87,7 +82,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun refreshPermissions() {
         ShizukuManager.refresh()
         _canDrawOverlays.value = Settings.canDrawOverlays(getApplication())
-        _circletIsAssistant.value = AssistantRole.isHeld(getApplication())
         GestureOverlayService.sync(getApplication())
         // Shizuku may have just been granted: apply the assistant-gesture choice now.
         viewModelScope.launch { AssistGestureBlocker.sync(getApplication()) }
@@ -116,17 +110,4 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    /**
-     * Makes Circlet the default assistant (Shizuku), or opens the system picker. Also makes sure the
-     * overlay permission is there, since the assistant entry point draws the Circle to Search layer.
-     */
-    fun setCircletAsAssistant(openSettings: (android.content.Intent) -> Unit) {
-        viewModelScope.launch {
-            if (!_canDrawOverlays.value && ShizukuManager.isGranted) ShizukuManager.grantOverlayPermission()
-            if (!AssistantRole.makeDefault(getApplication())) {
-                openSettings(AssistantRole.settingsIntent())
-            }
-            refreshPermissions()
-        }
-    }
 }

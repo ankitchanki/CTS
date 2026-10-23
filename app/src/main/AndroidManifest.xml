@@ -45,54 +45,6 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
-        <!-- Makes Circlet selectable as "Default digital assistant app": the system's assistant
-             gestures (corner swipe, long-press home) then open Circlet instead of Gemini. -->
-        <activity
-            android:name=".ui.activity.AssistActivity"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:taskAffinity=""
-            android:theme="@android:style/Theme.NoDisplay">
-            <intent-filter>
-                <action android:name="android.intent.action.ASSIST" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <!-- Full voice interaction service: needed because some launchers (HyperOS) invoke the
-             assistant through VoiceInteractionManagerService, which ignores ACTION_ASSIST activities. -->
-        <service
-            android:name=".assist.CircletVoiceInteractionService"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:permission="android.permission.BIND_VOICE_INTERACTION">
-            <meta-data
-                android:name="android.voice_interaction"
-                android:resource="@xml/voice_interaction_service" />
-            <intent-filter>
-                <action android:name="android.service.voice.VoiceInteractionService" />
-            </intent-filter>
-        </service>
-
-        <service
-            android:name=".assist.CircletSessionService"
-            android:exported="true"
-            android:permission="android.permission.BIND_VOICE_INTERACTION" />
-
-        <service
-            android:name=".assist.CircletRecognitionService"
-            android:exported="true"
-            android:label="@string/app_name">
-            <intent-filter>
-                <action android:name="android.speech.RecognitionService" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <meta-data
-                android:name="android.speech"
-                android:resource="@xml/recognition_service" />
-        </service>
-
         <service
             android:name=".LaunchTileService"
             android:exported="true"
@@ -121,16 +73,6 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
 
         <provider
             android:name="rikka.shizuku.ShizukuProvider"

@@ -40,17 +40,6 @@ object CircleToSearchTrigger {
     }
 
     /**
-     * Whether a system trigger can reach Google at all. While Circlet holds the assistant role,
-     * VIS talks to Circlet, so only CSService (root Shizuku) still works.
-     */
-    fun canReachGoogle(context: Context): Boolean {
-        if (!AssistantRole.isHeld(context)) return true
-        val prefs = context.getSharedPreferences(AppConfig.CONFIG_NAME, Context.MODE_PRIVATE)
-        val service = prefs.getInt(AppConfig.KEY_TRIGGER_SERVICE, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_TRIGGER_SERVICE] as Int)
-        return service == TriggerService.CSService.ordinal && TriggerService.CSService.isSupported && ShizukuManager.isRoot.value
-    }
-
-    /**
      * Asks VoiceInteractionManagerService to show the assistant session with the omni
      * entry point. Works without Shizuku as long as Google is the default assistant.
      */

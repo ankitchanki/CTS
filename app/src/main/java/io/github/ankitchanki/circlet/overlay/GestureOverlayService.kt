@@ -17,10 +17,9 @@ import android.util.Log
 import android.widget.Toast
 import io.github.ankitchanki.circlet.R
 import io.github.ankitchanki.circlet.config.AppConfig
-import io.github.ankitchanki.circlet.config.GestureAction
 import io.github.ankitchanki.circlet.gesture.CornerGestureController
 import io.github.ankitchanki.circlet.shizuku.AssistGestureBlocker
-import io.github.ankitchanki.circlet.trigger.CircleToSearchTrigger
+import io.github.ankitchanki.circlet.ui.activity.MainActivity
 import io.github.ankitchanki.circlet.ui.activity.SettingsActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,13 +29,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Foreground service that keeps the bottom-corner gesture zones on screen, and plays the
- * invocation when Circlet is opened as the default assistant ([ACTION_INVOKE]).
+ * Foreground service that keeps the bottom-corner gesture zones on screen. A completed swipe plays
+ * the invocation animation, then opens native Circle to Search exactly like tapping the app icon.
  */
 class GestureOverlayService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var controller: CornerGestureController
-    private var session: CircleToSearchSession? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -49,10 +47,12 @@ class GestureOverlayService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (cornersEnabled(this)) controller.attach()
-        val invoked = intent?.action == ACTION_INVOKE && session == null && controller.invoke()
-        if (!invoked) stopIfIdle()
-        return if (cornersEnabled(this)) START_STICKY else START_NOT_STICKY
+        if (!cornersEnabled(this)) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        controller.attach()
+        return START_STICKY
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -61,53 +61,26 @@ class GestureOverlayService : Service() {
     }
 
     override fun onDestroy() {
-        session?.close()
         controller.detach()
         scope.cancel()
         super.onDestroy()
     }
 
     private fun onInvoked(frame: Bitmap?, release: () -> Unit) {
-        val prefs = getSharedPreferences(AppConfig.CONFIG_NAME, MODE_PRIVATE)
-        val action = GestureAction.entries.getOrNull(
-            prefs.getInt(AppConfig.KEY_GESTURE_ACTION, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_GESTURE_ACTION] as Int)
-        )
-        // While Circlet is the default assistant, VIS reaches Circlet itself, not Google.
-        if (action == GestureAction.BuiltInLasso || !CircleToSearchTrigger.canReachGoogle(this)) {
-            release()
-            if (frame == null) {
-                // No screenshot (Shizuku missing or capture failed). Don't fall back to the
-                // assistant trigger here: on many devices that opens Gemini instead.
-                Toast.makeText(this, R.string.lasso_needs_shizuku, Toast.LENGTH_LONG).show()
-                stopIfIdle()
-                return
-            }
-            val newSession = CircleToSearchSession(this, scope, frame) {
-                session = null
-                stopIfIdle()
-            }
-            session = newSession
-            newSession.show()
-            return
-        }
-
-        // Native Circle to Search via the selected trigger service, same as tapping the app icon.
+        // The frozen frame only served the animation.
         release()
         frame?.recycle()
         scope.launch {
             // Let the compositor drop our layer so Google's own screenshot doesn't include it.
             delay(SYSTEM_TRIGGER_DELAY_MS)
-            val vibrate = prefs.getBoolean(AppConfig.KEY_VIBRATE, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_VIBRATE] as Boolean)
-            if (!CircleToSearchTrigger.trigger(this@GestureOverlayService, ENTRY_POINT, vibrate)) {
-                Toast.makeText(this@GestureOverlayService, R.string.trigger_failed, Toast.LENGTH_SHORT).show()
-            }
-            stopIfIdle()
+            // Trigger from an activity, exactly like the app icon: Google treats an invocation
+            // coming from a background service differently (it opened Lens instead).
+            runCatching { startActivity(MainActivity.gestureIntent(this@GestureOverlayService)) }
+                .onFailure { e ->
+                    Log.e(TAG, "starting trigger activity failed", e)
+                    Toast.makeText(this@GestureOverlayService, R.string.trigger_failed, Toast.LENGTH_SHORT).show()
+                }
         }
-    }
-
-    /** Started only for an assistant invocation: go away once it is over. */
-    private fun stopIfIdle() {
-        if (!cornersEnabled(this) && session == null && controller.isIdle) stopSelf()
     }
 
     private fun startForegroundCompat() {
@@ -135,12 +108,7 @@ class GestureOverlayService : Service() {
         private const val TAG = "Circlet-Service"
         private const val CHANNEL_ID = "corner_gesture"
         private const val NOTIFICATION_ID = 1
-        private const val ENTRY_POINT = 1
         private const val SYSTEM_TRIGGER_DELAY_MS = 120L
-        private const val ACTION_INVOKE = "io.github.ankitchanki.circlet.action.INVOKE"
-
-        fun invokeIntent(context: Context): Intent =
-            Intent(context, GestureOverlayService::class.java).setAction(ACTION_INVOKE)
 
         private fun cornersEnabled(context: Context): Boolean =
             context.getSharedPreferences(AppConfig.CONFIG_NAME, MODE_PRIVATE)

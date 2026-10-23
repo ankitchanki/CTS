@@ -62,10 +62,6 @@ class CornerGestureController(
     private var animator: ValueAnimator? = null
     /** True from activation or release until the effects layer is gone; new touches are ignored. */
     private var busy = false
-    /** No gesture, animation or effects layer in flight. */
-    val isIdle: Boolean
-        get() = !busy && effectsView == null
-
     /** How far above the bottom edge the zones sit (navigation bar / gesture strip height). */
     private var bottomInset = 0
 
@@ -116,30 +112,6 @@ class CornerGestureController(
             MotionEvent.ACTION_MOVE -> if (!busy) onState(tracker.onMove(event.rawX, event.rawY))
             MotionEvent.ACTION_UP -> if (!busy) onState(tracker.onUp())
             MotionEvent.ACTION_CANCEL -> if (!busy) onState(tracker.cancel())
-        }
-        return true
-    }
-
-    /**
-     * Plays the whole invocation without a swipe (progress animates to 1 on its own), e.g. when
-     * Circlet is launched as the default assistant by the system's own gesture.
-     */
-    /** Returns false when nothing was started (already busy, or the effects layer failed). */
-    fun invoke(corner: Corner = Corner.BottomRight): Boolean {
-        if (busy || effectsView != null) return false
-        busy = true
-        startGesture(corner)
-        val view = effectsView ?: run {
-            busy = false
-            return false
-        }
-        scope.launch {
-            animate(AUTO_PROGRESS_MS) { t ->
-                val p = Easing.easeInOutCubic(t)
-                view.visuals = GestureVisualsModel.forProgress(p)
-                haptics.onProgress(p)
-            }
-            onActivated()
         }
         return true
     }
@@ -290,6 +262,5 @@ class CornerGestureController(
         private const val REVEAL_DELAY_MS = 200L
         private const val CAPTURE_TIMEOUT_MS = 1500L
         private const val RETRACT_DURATION_MS = 220L
-        private const val AUTO_PROGRESS_MS = 420L
     }
 }

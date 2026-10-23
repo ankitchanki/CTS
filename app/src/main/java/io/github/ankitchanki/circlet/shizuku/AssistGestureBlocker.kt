@@ -2,7 +2,6 @@ package io.github.ankitchanki.circlet.shizuku
 
 import android.content.Context
 import io.github.ankitchanki.circlet.config.AppConfig
-import io.github.ankitchanki.circlet.trigger.AssistantRole
 
 /**
  * The system's own "swipe from a bottom corner to invoke the assistant" gesture (AOSP/Pixel
@@ -40,12 +39,8 @@ object AssistGestureBlocker {
         return ok
     }
 
-    /**
-     * Applies the user's choice: blocked only while both the corner gesture and the option are on,
-     * and never while Circlet itself is the assistant (then that system gesture opens Circlet).
-     */
+    /** Applies the user's choice: blocked only while both the corner gesture and the option are on. */
     suspend fun sync(context: Context): Boolean {
-        if (AssistantRole.isHeld(context)) return restore(context)
         val prefs = prefs(context)
         val gesture = prefs.getBoolean(AppConfig.KEY_CORNER_GESTURE, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_CORNER_GESTURE] as Boolean)
         val wantBlock = prefs.getBoolean(AppConfig.KEY_BLOCK_ASSIST_GESTURE, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_BLOCK_ASSIST_GESTURE] as Boolean)

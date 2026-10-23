@@ -27,7 +27,6 @@ approximate it with 90 interpolated arc segments.
 | `ic-trigger-service.svg` | Settings › System trigger service | `drawable/ic_trigger_service.xml` |
 | `ic-assistant.svg` | Settings › Set Google as default assistant | `drawable/ic_assistant.xml` |
 | `ic-corner-gesture.svg` | Settings › Corner swipe gesture | `drawable/ic_corner_gesture.xml` |
-| `ic-lasso.svg` | Settings › Gesture action | `drawable/ic_lasso.xml` |
 
 ## Overlay artwork — `svg/ui/` (reference renders of what the overlay code draws)
 
@@ -35,11 +34,8 @@ approximate it with 90 interpolated arc segments.
 | --- | --- | --- |
 | `corner-handle.svg` | Resting corner indicator lines | `EffectsView.drawHandle` |
 | `corner-beam.svg` | Multi-colour crescent at full progress | `EffectsView.drawBeam` |
-| `edge-glow.svg` | Rotating rainbow glow around the screen edges during the swipe and in Circle to Search mode | `EdgeGlowRenderer` |
+| `edge-glow.svg` | Rotating rainbow glow around the screen edges during the swipe | `EdgeGlowRenderer` |
 | `recessed-card.svg` | App frame scaled to 0.96 in a rounded card over the scrim | `EffectsView.drawRecessedCard` |
 | `shimmer.svg` | White wave when the viewport locks | `EffectsView.drawShimmer` |
-| `lasso-stroke.svg` | Lasso being drawn | `SelectionOverlayView` |
-| `selection-box.svg` | Committed selection with dimmed outside | `SelectionOverlayView` |
-| `hint-pill.svg` | "Circle or draw a box to search" hint | `SelectionOverlayView.drawHint` |
 
 Palette: Blue `#4285F4`, Red `#EA4335`, Yellow `#FBBC04`, Green `#34A853` (`gesture/GestureVisuals.kt › PixelPalette`).

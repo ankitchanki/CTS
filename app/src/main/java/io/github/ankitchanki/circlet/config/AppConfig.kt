@@ -43,14 +43,6 @@ enum class TriggerService(val isSupported: Boolean, val needsShizukuRoot: Boolea
     }
 }
 
-/** What happens once the corner swipe gesture reaches full progress. Ordinals are persisted. */
-enum class GestureAction(val id: Int) {
-    // Frozen screenshot + lasso selection handled by this app (needs Shizuku for screencap).
-    BuiltInLasso(R.string.gesture_action_lasso),
-    // Hand off to the system / Google Circle to Search via the selected trigger service.
-    SystemCircleToSearch(R.string.gesture_action_system),
-}
-
 object AppConfig {
     const val CONFIG_NAME = "app_config"
     const val KEY_LANGUAGE = "language"
@@ -60,7 +52,6 @@ object AppConfig {
     const val KEY_ASYNC_TRIGGER = "async_trigger"
     const val KEY_TRIGGER_SERVICE = "trigger_service"
     const val KEY_CORNER_GESTURE = "corner_gesture"
-    const val KEY_GESTURE_ACTION = "gesture_action"
     const val KEY_BLOCK_ASSIST_GESTURE = "block_assist_gesture"
     /** Original value of the system assist gesture setting, kept while Circlet has it turned off. */
     const val KEY_SAVED_ASSIST_GESTURE = "saved_assist_gesture"
@@ -73,9 +64,6 @@ object AppConfig {
         KEY_ASYNC_TRIGGER to false,
         KEY_TRIGGER_SERVICE to TriggerService.VIS.ordinal,
         KEY_CORNER_GESTURE to false,
-        // Native first: on phones where Google enabled Circle to Search it's the real thing, and
-        // the gesture falls back to the lasso by itself while Circlet is the assistant.
-        KEY_GESTURE_ACTION to GestureAction.SystemCircleToSearch.ordinal,
         KEY_BLOCK_ASSIST_GESTURE to true,
     )
 }

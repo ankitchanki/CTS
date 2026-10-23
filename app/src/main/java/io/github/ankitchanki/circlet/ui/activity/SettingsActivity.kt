@@ -58,7 +58,6 @@ import io.github.ankitchanki.circlet.BuildConfig
 import io.github.ankitchanki.circlet.MainApplication
 import io.github.ankitchanki.circlet.R
 import io.github.ankitchanki.circlet.config.AppConfig
-import io.github.ankitchanki.circlet.config.GestureAction
 import io.github.ankitchanki.circlet.config.Language
 import io.github.ankitchanki.circlet.config.TriggerService
 import io.github.ankitchanki.circlet.shizuku.ShizukuManager
@@ -264,7 +263,6 @@ fun SettingsPage(
         val assistantResult by viewModel.assistantResult.collectAsState()
         val shizukuGranted = shizukuStatus == ShizukuStatus.Granted
         val shizukuIsRoot by viewModel.shizukuIsRoot.collectAsState()
-        val circletIsAssistant by viewModel.circletIsAssistant.collectAsState()
         val context = LocalContext.current
 
         SectionHeader(stringResource(R.string.shizuku_settings))
@@ -347,22 +345,6 @@ fun SettingsPage(
         )
 
         ListItem(
-            leadingContent = { Icon(painterResource(R.drawable.ic_tile_service), contentDescription = null) },
-            headlineContent = { Text(stringResource(R.string.circlet_assistant)) },
-            supportingContent = {
-                Text(stringResource(if (circletIsAssistant) R.string.circlet_assistant_active else R.string.circlet_assistant_summary))
-            },
-            trailingContent = {
-                TextButton(
-                    enabled = !circletIsAssistant,
-                    onClick = { viewModel.setCircletAsAssistant { context.startActivity(it) } }
-                ) {
-                    Text(stringResource(R.string.set))
-                }
-            }
-        )
-
-        ListItem(
             leadingContent = { Icon(painterResource(R.drawable.ic_assistant), contentDescription = null) },
             headlineContent = { Text(stringResource(R.string.set_google_assistant)) },
             supportingContent = {
@@ -426,40 +408,6 @@ fun SettingsPage(
                     checked = appConfig[AppConfig.KEY_BLOCK_ASSIST_GESTURE] as Boolean,
                     onCheckedChange = { viewModel.updateAppConfig(AppConfig.KEY_BLOCK_ASSIST_GESTURE, it) }
                 )
-            }
-        )
-
-        ListItem(
-            leadingContent = { Icon(painterResource(R.drawable.ic_lasso), contentDescription = null) },
-            headlineContent = { Text(stringResource(R.string.gesture_action)) },
-            supportingContent = {
-                val lasso = appConfig[AppConfig.KEY_GESTURE_ACTION] as Int == GestureAction.BuiltInLasso.ordinal
-                Text(stringResource(if (lasso && !shizukuGranted) R.string.requires_shizuku else R.string.gesture_action_summary))
-            },
-            trailingContent = {
-                Box {
-                    var gestureActionExpanded by remember { viewModel.gestureActionExpanded }
-                    val selected = GestureAction.entries[appConfig[AppConfig.KEY_GESTURE_ACTION] as Int]
-
-                    TextButton(onClick = { gestureActionExpanded = true }) {
-                        Text(text = stringResource(selected.id))
-                    }
-
-                    DropdownMenu(
-                        expanded = gestureActionExpanded,
-                        onDismissRequest = { gestureActionExpanded = false }
-                    ) {
-                        GestureAction.entries.forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(stringResource(option.id)) },
-                                onClick = {
-                                    gestureActionExpanded = false
-                                    viewModel.updateAppConfig(AppConfig.KEY_GESTURE_ACTION, option.ordinal)
-                                }
-                            )
-                        }
-                    }
-                }
             }
         )
     }

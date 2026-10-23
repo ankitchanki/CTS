@@ -1,8 +1,6 @@
 package io.github.ankitchanki.circlet.gesture
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -45,23 +43,5 @@ class GestureVisualsTest {
         assertEquals(0f, start.alpha, 1e-6f)
         assertEquals(0f, end.alpha, 1e-6f)
         assertTrue(ShimmerModel.frame(0.5f).alpha > 0.5f)
-    }
-
-    @Test
-    fun tapIsNotASelection() {
-        assertNull(SelectionGeometry.selectionFor(listOf(Vec2(50f, 50f), Vec2(52f, 51f)), 100f, 100f, 10f, 4f))
-    }
-
-    @Test
-    fun selectionIsPaddedAndClamped() {
-        val rect = SelectionGeometry.selectionFor(listOf(Vec2(2f, 10f), Vec2(60f, 40f), Vec2(30f, 98f)), 100f, 100f, 10f, 5f)
-        assertNotNull(rect)
-        assertEquals(SelectionRect(0f, 5f, 65f, 100f), rect)
-    }
-
-    @Test
-    fun selectionMapsToBitmapPixels() {
-        val px = SelectionGeometry.toBitmapRect(SelectionRect(10f, 20f, 50f, 60f), 100f, 200f, 200, 400)
-        assertEquals(PixelRect(20, 40, 100, 120), px)
     }
 }
