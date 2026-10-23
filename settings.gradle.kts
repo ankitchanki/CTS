@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ShizukuCTS"
+rootProject.name = "Circlet"
 include(":app")
  

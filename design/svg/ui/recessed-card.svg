@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640">
+  <!-- Recessing window at progress 1.0: frozen frame scaled to 0.96 into a 32dp rounded card over
+       a 55% black scrim. EffectsView.drawRecessedCard. -->
+  <rect width="360" height="640" fill="#000000" fill-opacity="0.55"/>
+  <rect x="7.2" y="12.8" width="345.6" height="614.4" rx="32" fill="#E8EAED"/>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <!-- Resting corner indicator (bottom-left; mirror for bottom-right): two short lines joined by an
+       arc that follows the display's rounded corner. EffectsView.drawHandle, 3dp stroke, 90% white. -->
+  <rect width="96" height="96" fill="#202124"/>
+  <path d="M52,90H30A24,24 0 0,1 6,66V44" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -8,7 +8,7 @@
         android:shortcutLongLabel="@string/title_activity_settings">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.ankitchanki.cts"
-            android:targetClass="com.parallelc.micts.ui.activity.SettingsActivity" />
+            android:targetPackage="io.github.ankitchanki.circlet"
+            android:targetClass="io.github.ankitchanki.circlet.ui.activity.SettingsActivity" />
     </shortcut>
 </shortcuts>

@@ -1,8 +1,22 @@
-<?xml version="1.0" encoding="utf-8"?>
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/ic_launcher_foreground"
-    android:insetTop="-20dp"
-    android:insetLeft="-20dp"
-    android:insetRight="-20dp"
-    android:insetBottom="-20dp"
-/>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Quick Settings tile / app mark. Source: design/svg/ui/ic-tile-service.svg -->
+    <path
+        android:pathData="M3.5,10.5a7,7 0 1,0 14,0a7,7 0 1,0 -14,0"
+        android:strokeWidth="2.2"
+        android:strokeColor="@android:color/white"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M15.5,15.5L20.5,20.5"
+        android:strokeWidth="2.6"
+        android:strokeColor="@android:color/white"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M10.5,7.3Q10.5,10.5 13.7,10.5Q10.5,10.5 10.5,13.7Q10.5,10.5 7.3,10.5Q10.5,10.5 10.5,7.3Z"
+        android:fillColor="@android:color/white" />
+</vector>

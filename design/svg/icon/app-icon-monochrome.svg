@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+  <!-- Android 13+ themed icon: a single colour, tinted by the system. -->
+  <path d="M32,51a19,19 0 1,0 38,0a19,19 0 1,0 -38,0" stroke="#000" stroke-width="6.5" fill="none"/>
+  <path d="M64.44,64.44L73,73" stroke="#000" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M51,43Q51,51 59,51Q51,51 51,59Q51,51 43,51Q51,51 51,43Z" fill="#000"/>
+</svg>

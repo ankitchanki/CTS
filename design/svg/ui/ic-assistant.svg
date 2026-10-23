@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" color="#1F1F1F">
+  <!-- Default assistant -->
+  <path d="M9,3.5Q9,9 14.5,9Q9,9 9,14.5Q9,9 3.5,9Q9,9 9,3.5Z" fill="currentColor"/>
+  <path d="M17,13Q17,16.5 20.5,16.5Q17,16.5 17,20Q17,16.5 13.5,16.5Q17,16.5 17,13Z" fill="currentColor"/>
+</svg>

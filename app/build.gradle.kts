@@ -19,22 +19,27 @@ val commitCount = (repo?.commitCount("HEAD") ?: 1)
 val latestTag = repo?.latestTag?.removePrefix("v") ?: "1.0"
 
 android {
-    namespace = "com.parallelc.micts"
+    namespace = "io.github.ankitchanki.circlet"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.ankitchanki.cts"
+        applicationId = "io.github.ankitchanki.circlet"
         minSdk = 28
         targetSdk = 36
         versionCode = commitCount
         versionName = latestTag
-        buildConfigField("String", "APP_NAME", "\"ShizukuCTS\"")
+        buildConfigField("String", "APP_NAME", "\"Circlet\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
+            // Without the apksign keystore properties (see CI secrets), fall back to the debug key so
+            // the APK is still installable. Builds signed this way can't update each other across machines.
+            if (!project.hasProperty("androidStoreFile")) {
+                signingConfig = signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -58,7 +63,7 @@ androidComponents {
             val vName = output.versionName.get()
             val vCode = output.versionCode.get()
 
-            output.outputFileName.set("ShizukuCTS_${vName}_${vCode}_${variant.name}.apk")
+            output.outputFileName.set("Circlet_${vName}_${vCode}_${variant.name}.apk")
         }
     }
 }

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640">
+  <!-- Viewport-locked flash: a translucent white band sweeping from the invoking corner to the
+       opposite corner (shown mid-sweep). EffectsView.drawShimmer / ShimmerModel. -->
+  <defs>
+    <linearGradient id="band" x1="0" y1="640" x2="360" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0.28" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.65"/>
+      <stop offset="0.72" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="640" rx="32" fill="#3C4043"/>
+  <rect width="360" height="640" rx="32" fill="url(#band)"/>
+</svg>

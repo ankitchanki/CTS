@@ -13,6 +13,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -69,4 +72,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ${{ env.APK_PATH }}
-          name: ShizukuCTS_${{ env.NAME_SUFFIX }}
+          name: Circlet_${{ env.NAME_SUFFIX }}
+
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.APK_PATH }}
+          generate_release_notes: true

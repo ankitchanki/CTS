@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#03A9F4</color>
+    <!-- Adaptive icon background layer (design/svg/icon/app-icon-background.svg). -->
+    <color name="launcher_background">#F8F9FA</color>
+    <!-- Accent used by the settings shortcut glyph. -->
+    <color name="ic_launcher_background">#4285F4</color>
 </resources>

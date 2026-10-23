@@ -1,12 +1,16 @@
-# ShizukuCTS
+# Circlet
+
+<img src="design/app-icon-512.png" width="96" align="right" alt="Circlet icon">
 
 Trigger Circle to Search on Android 9–16, using **Shizuku** instead of an LSPosed module. It also adds a Pixel-style diagonal corner swipe gesture.
+
+Package name: `io.github.ankitchanki.circlet`. Download the latest APK from [Releases](https://github.com/ankitchanki/CTS/releases).
 
 Forked from [parallelcc/MiCTS](https://github.com/parallelcc/micts) (GPL-3.0). All credit for the original trigger work goes to that project.
 
 ## What changed from MiCTS
 
-| MiCTS (LSPosed) | ShizukuCTS |
+| MiCTS (LSPosed) | Circlet |
 | --- | --- |
 | Hooks system_server / launcher / Google | No hooks; privileged calls run in a Shizuku user service (shell or root) |
 | `VIS`, `CSHelper`, `CSService` trigger services | `VIS` (no Shizuku needed) and `CSService` (via Shizuku) |
@@ -16,7 +20,7 @@ Forked from [parallelcc/MiCTS](https://github.com/parallelcc/micts) (GPL-3.0). A
 ## How to use
 
 1. Install the latest [Google](https://play.google.com/store/apps/details?id=com.google.android.googlequicksearchbox) app and set it as the default assistant. Once Shizuku is connected, the settings page can do this for you.
-2. Install and start [Shizuku](https://shizuku.rikka.app/), then open ShizukuCTS settings and tap **Grant**.
+2. Install and start [Shizuku](https://shizuku.rikka.app/), then open Circlet settings and tap **Grant**.
 3. Trigger it:
    - Launch the app, use the Quick Settings tile, or point any automation app (Quick Ball, ShortX, Routines+…) at it.
    - Or turn on **Corner swipe gesture** and swipe diagonally inward from the bottom-left or bottom-right corner.
@@ -58,6 +62,16 @@ The pure parts are unit tested (`./gradlew :app:testDebugUnitTest`).
 - Overlay windows sit below the status and navigation bars, so the real bars stay on top of the recessed frame.
 - With gesture navigation, some launchers claim upward swipes from the bottom edge, which cancels the corner gesture. Swipe more sideways, or use 3-button navigation.
 - The recessed-window and freeze effects need Shizuku (for `screencap`). Without it you still get the beam animation and the system trigger.
+
+## Design assets
+
+The app icon, UI glyphs and overlay artwork each have a separate SVG in [`design/svg`](design/README.md).
+
+## Building and releasing
+
+- Every push builds a release APK in GitHub Actions (artifact `Circlet_<commit>`).
+- Pushing a `v*` tag also publishes a GitHub Release with the APK attached.
+- Signing: add the repository secrets `KEY_STORE` (base64 keystore), `KEY_STORE_PASSWORD`, `ALIAS` and `KEY_PASSWORD`. Without them, CI signs with a throwaway debug key: the APK installs, but different builds can't update each other.
 
 ## License
 
