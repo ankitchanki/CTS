@@ -2,6 +2,11 @@ name: CI Build
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Publish a GitHub Release with this tag (e.g. v1.0.0). Leave empty to only build.'
+        required: false
+        default: ''
   push:
     branches: [ '**' ]
     tags: [ v* ]
@@ -19,6 +24,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
 
     steps:
       - name: Checkout
@@ -57,7 +64,7 @@ jobs:
 
       - name: Build Release
         run: |
-          ./gradlew :app:assembleRelease
+          ./gradlew :app:assembleRelease ${RELEASE_TAG:+-PreleaseVersion=${RELEASE_TAG#v}}
           echo "APK_PATH=$(find app/build/outputs/apk/release -name '*.apk')" >> $GITHUB_ENV
 
       - name: Set NAME_SUFFIX
@@ -75,8 +82,11 @@ jobs:
           name: Circlet_${{ env.NAME_SUFFIX }}
 
       - name: Publish GitHub Release
-        if: github.ref_type == 'tag'
+        if: env.RELEASE_TAG != ''
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: Circlet ${{ env.RELEASE_TAG }}
           files: ${{ env.APK_PATH }}
           generate_release_notes: true

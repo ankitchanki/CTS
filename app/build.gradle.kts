@@ -16,7 +16,7 @@ apksign {
 
 val repo = jgit.repo()
 val commitCount = (repo?.commitCount("HEAD") ?: 1)
-val latestTag = repo?.latestTag?.removePrefix("v") ?: "1.0"
+val latestTag = (findProperty("releaseVersion") as String?) ?: repo?.latestTag?.removePrefix("v") ?: "1.0"
 
 android {
     namespace = "io.github.ankitchanki.circlet"

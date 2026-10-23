@@ -70,7 +70,7 @@ The app icon, UI glyphs and overlay artwork each have a separate SVG in [`design
 ## Building and releasing
 
 - Every push builds a release APK in GitHub Actions (artifact `Circlet_<commit>`).
-- Pushing a `v*` tag also publishes a GitHub Release with the APK attached.
+- To publish a release, run **Actions › CI Build › Run workflow** and enter a tag such as `v1.0.1`. Pushing a `v*` tag works too. Either way the tag is created and a GitHub Release is published with the APK attached.
 - Signing: add the repository secrets `KEY_STORE` (base64 keystore), `KEY_STORE_PASSWORD`, `ALIAS` and `KEY_PASSWORD`. Without them, CI signs with a throwaway debug key: the APK installs, but different builds can't update each other.
 
 ## License
