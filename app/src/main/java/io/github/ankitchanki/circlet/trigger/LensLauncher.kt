@@ -2,6 +2,7 @@ package io.github.ankitchanki.circlet.trigger
 
 import android.content.ActivityNotFoundException
 import android.content.ClipData
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -22,7 +23,9 @@ object LensLauncher {
             runCatching {
                 val crop = Bitmap.createBitmap(frame, region.left, region.top, region.width, region.height)
                 val dir = File(context.cacheDir, SHARE_DIR).apply { mkdirs() }
-                File(dir, "selection.png").also { out ->
+                // A fresh name per search: Lens may cache by URI and show the previous selection.
+                dir.listFiles()?.forEach { it.delete() }
+                File(dir, "selection-${System.currentTimeMillis()}.png").also { out ->
                     out.outputStream().use { crop.compress(Bitmap.CompressFormat.PNG, 100, it) }
                     if (crop !== frame) crop.recycle()
                 }
@@ -36,13 +39,25 @@ object LensLauncher {
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         send.clipData = ClipData.newRawUri(null, uri)
 
+        // The Google app has several image share targets (Lens search, save, ...); aiming at the
+        // package alone shows an "Once / Always" picker, so target the Lens activity directly.
+        val target = lensActivity(context, send)?.let { Intent(send).setComponent(it) }
+            ?: Intent(send).setPackage(GOOGLE_PACKAGE)
         return try {
-            context.startActivity(Intent(send).setPackage(GOOGLE_PACKAGE))
+            context.startActivity(target)
             true
         } catch (_: ActivityNotFoundException) {
             runCatching {
                 context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }.isSuccess
         }
+    }
+
+    private fun lensActivity(context: Context, send: Intent): ComponentName? {
+        @Suppress("DEPRECATION")
+        val matches = context.packageManager.queryIntentActivities(Intent(send).setPackage(GOOGLE_PACKAGE), 0)
+        val pick = matches.firstOrNull { it.activityInfo.name.contains("lens", ignoreCase = true) }
+            ?: matches.singleOrNull()
+        return pick?.activityInfo?.let { ComponentName(it.packageName, it.name) }
     }
 }

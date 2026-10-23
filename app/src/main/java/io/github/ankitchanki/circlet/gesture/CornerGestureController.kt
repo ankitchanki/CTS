@@ -244,7 +244,8 @@ class CornerGestureController(
     private fun removeEffects() {
         revealJob?.cancel()
         revealJob = null
-        effectsView?.let { runCatching { windowManager.removeView(it) } }
+        // Synchronous, so the layer is gone before a system Circle to Search takes its screenshot.
+        effectsView?.let { runCatching { windowManager.removeViewImmediate(it) } }
         effectsView = null
     }
 

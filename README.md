@@ -40,6 +40,13 @@ Forked from [parallelcc/MiCTS](https://github.com/parallelcc/micts) (GPL-3.0). C
    - **Corner swipe gesture** on, or
    - the Quick Settings tile / app icon.
 
+## First: does your phone already have Circle to Search?
+
+Open Circlet once by tapping its icon.
+
+- **Google's real Circle to Search opens.** Google has enabled it for your phone. Keep Google as the default assistant, turn on **Corner swipe gesture**, and leave **Gesture action → Native Circle to Search** (the default). The swipe then plays Circlet's animation and opens the same native Circle to Search as the icon.
+- **Gemini or nothing opens.** Your phone doesn't have it natively; use one of the setups below.
+
 ## Setup for phones without native Circle to Search
 
 "Native" means Google has enabled Circle to Search for your model: Pixel, recent Samsung Galaxy, and some Xiaomi, Honor and OPPO phones. If long-pressing the home handle doesn't open Circle to Search on your phone, use one of these setups.
@@ -64,7 +71,7 @@ Trade-off: while Circlet is the assistant, Google Assistant and Gemini aren't. G
 
 1. Start Shizuku, open Circlet and tap **Grant**.
 2. Turn on **Corner swipe gesture**. *Display over other apps* is granted through Shizuku.
-3. Keep **Gesture action → Built-in lasso**.
+3. Set **Gesture action → Built-in lasso (Lens)**. Native only works where Google enabled Circle to Search.
 4. Keep **Stop Gemini on corner swipe** on. It turns off Android's own corner-assistant gesture (AOSP/Pixel setting), so it doesn't race Circlet.
 5. Swipe from just above the navigation bar in a bottom corner, inward at about 45°.
 
@@ -78,7 +85,7 @@ Google decides on its servers whether Circle to Search is enabled for a model; n
 
 1. Set **Google** as the default assistant (Circlet: **Set Google as default assistant**).
 2. Use GMS Flags or similar to enable Google's Circle to Search flags for your device (see the MiCTS project's notes), or a root device-spoof module.
-3. In Circlet, set **System trigger service → VIS** (or **CSService** on Android 15+ with Shizuku running as root), and **Gesture action → System Circle to Search**.
+3. In Circlet, set **System trigger service → VIS** (or **CSService** on Android 15+ with Shizuku running as root), and **Gesture action → Native Circle to Search**.
 
 If Gemini opens instead of Circle to Search, Google hasn't enabled it for your device; use Setup A.
 
@@ -104,7 +111,7 @@ If Gemini opens instead of Circle to Search, Google hasn't enabled it for your d
 - **Set Google as default assistant**: switches back to Google, needed for `VIS` / Setup C.
 - **Corner swipe gesture**: Circlet's own corner zones (Setup B).
 - **Stop Gemini on corner swipe**: turns off Android's corner-assistant gesture while Circlet's gesture is on, and restores your setting when you turn it off. It steps aside while Circlet itself is the assistant.
-- **Gesture action**: `Built-in lasso` (frozen screen → Lens) or `System Circle to Search` (Google's UI through the trigger service).
+- **Gesture action**: `Native Circle to Search` (default: Google's UI, the same as tapping the icon) or `Built-in lasso (Lens)` (frozen screen → Google Lens, for phones without native support).
 - **App settings**: launch and tile delays, vibration, async trigger, language.
 
 ## Troubleshooting
@@ -112,6 +119,8 @@ If Gemini opens instead of Circle to Search, Google hasn't enabled it for your d
 | Problem | Fix |
 | --- | --- |
 | Touching a corner opens Recents | Fixed in v1.3.0: zones moved above the navigation bar. Update, and start the swipe slightly above the bar. |
+| Swipe shows a share sheet ("Search image / Save", "Once / Always") instead of Circle to Search | That's the built-in lasso. If tapping the Circlet icon opens native Circle to Search, set **Gesture action → Native Circle to Search**. Since v1.3.1 the lasso also opens Lens directly, without a picker. |
+| Circlet closes right after drawing a circle | Fixed in v1.3.1: the frozen screen was freed while the edge glow was still drawing it. |
 | Corner swipe opens Gemini | Use Setup A (Circlet as assistant). Or, for Setup B, keep *Stop Gemini on corner swipe* on; OEM launchers with their own setting need it turned off by hand. |
 | "Circlet didn't get the screen" | Turn on *Use screenshot* in *Digital assistant app* settings, or grant Shizuku in Circlet. |
 | "Circle to Search mode needs Shizuku" | Start Shizuku and tap **Grant** in Circlet. The built-in lasso needs it for screenshots on the corner-gesture path. |

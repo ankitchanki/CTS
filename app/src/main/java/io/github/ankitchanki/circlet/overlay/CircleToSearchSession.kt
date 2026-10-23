@@ -65,7 +65,10 @@ class CircleToSearchSession(
     }
 
     fun close() {
-        view?.let { runCatching { windowManager.removeView(it) } }
+        // removeView() tears the window down asynchronously, and the edge glow keeps a draw pending
+        // every frame; recycling the frame before the window is gone crashed that draw. Remove the
+        // window synchronously first.
+        view?.let { runCatching { windowManager.removeViewImmediate(it) } }
         view = null
         if (!frame.isRecycled) frame.recycle()
         onClosed()

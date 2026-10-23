@@ -432,7 +432,10 @@ fun SettingsPage(
         ListItem(
             leadingContent = { Icon(painterResource(R.drawable.ic_lasso), contentDescription = null) },
             headlineContent = { Text(stringResource(R.string.gesture_action)) },
-            supportingContent = { if (!shizukuGranted) Text(stringResource(R.string.requires_shizuku)) },
+            supportingContent = {
+                val lasso = appConfig[AppConfig.KEY_GESTURE_ACTION] as Int == GestureAction.BuiltInLasso.ordinal
+                Text(stringResource(if (lasso && !shizukuGranted) R.string.requires_shizuku else R.string.gesture_action_summary))
+            },
             trailingContent = {
                 Box {
                     var gestureActionExpanded by remember { viewModel.gestureActionExpanded }

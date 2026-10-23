@@ -26,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -90,10 +91,12 @@ class GestureOverlayService : Service() {
             return
         }
 
-        // System Circle to Search via the selected trigger service.
+        // Native Circle to Search via the selected trigger service, same as tapping the app icon.
         release()
         frame?.recycle()
         scope.launch {
+            // Let the compositor drop our layer so Google's own screenshot doesn't include it.
+            delay(SYSTEM_TRIGGER_DELAY_MS)
             val vibrate = prefs.getBoolean(AppConfig.KEY_VIBRATE, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_VIBRATE] as Boolean)
             if (!CircleToSearchTrigger.trigger(this@GestureOverlayService, ENTRY_POINT, vibrate)) {
                 Toast.makeText(this@GestureOverlayService, R.string.trigger_failed, Toast.LENGTH_SHORT).show()
@@ -133,6 +136,7 @@ class GestureOverlayService : Service() {
         private const val CHANNEL_ID = "corner_gesture"
         private const val NOTIFICATION_ID = 1
         private const val ENTRY_POINT = 1
+        private const val SYSTEM_TRIGGER_DELAY_MS = 120L
         private const val ACTION_INVOKE = "io.github.ankitchanki.circlet.action.INVOKE"
 
         fun invokeIntent(context: Context): Intent =

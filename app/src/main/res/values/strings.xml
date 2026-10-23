@@ -51,8 +51,9 @@
     <string name="corner_gesture">Corner swipe gesture</string>
     <string name="corner_gesture_summary">Swipe diagonally inward from a bottom corner</string>
     <string name="gesture_action">Gesture action</string>
-    <string name="gesture_action_lasso">Built-in lasso</string>
-    <string name="gesture_action_system">System Circle to Search</string>
+    <string name="gesture_action_lasso">Built-in lasso (Lens)</string>
+    <string name="gesture_action_system">Native Circle to Search</string>
+    <string name="gesture_action_summary">Choose Native if tapping the Circlet icon opens Google\'s Circle to Search</string>
     <string name="overlay_permission_required">Allow \"Display over other apps\" to use the corner gesture</string>
     <string name="gesture_notification_channel">Corner gesture</string>
     <string name="gesture_notification_title">Corner swipe gesture is active</string>
