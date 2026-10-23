@@ -18,6 +18,7 @@ import io.github.ankitchanki.circlet.R
 import io.github.ankitchanki.circlet.config.AppConfig
 import io.github.ankitchanki.circlet.config.GestureAction
 import io.github.ankitchanki.circlet.gesture.CornerGestureController
+import io.github.ankitchanki.circlet.shizuku.AssistGestureBlocker
 import io.github.ankitchanki.circlet.trigger.CircleToSearchTrigger
 import io.github.ankitchanki.circlet.ui.activity.SettingsActivity
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +40,8 @@ class GestureOverlayService : Service() {
         startForegroundCompat()
         controller = CornerGestureController(this, scope, ::onInvoked)
         controller.attach()
+        // Keep the system assistant corner swipe (Gemini) from taking our gesture.
+        scope.launch { AssistGestureBlocker.sync(this@GestureOverlayService) }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
@@ -55,15 +58,21 @@ class GestureOverlayService : Service() {
         val action = GestureAction.entries.getOrNull(
             prefs.getInt(AppConfig.KEY_GESTURE_ACTION, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_GESTURE_ACTION] as Int)
         )
-        if (action == GestureAction.BuiltInLasso && frame != null) {
+        if (action == GestureAction.BuiltInLasso) {
+            release()
+            if (frame == null) {
+                // No screenshot (Shizuku missing or capture failed). Don't fall back to the
+                // assistant trigger here: on many devices that opens Gemini instead.
+                Toast.makeText(this, R.string.lasso_needs_shizuku, Toast.LENGTH_LONG).show()
+                return
+            }
             val newSession = CircleToSearchSession(this, scope, frame) { session = null }
             session = newSession
             newSession.show()
-            release()
             return
         }
 
-        // System Circle to Search, or no frozen frame available (Shizuku missing).
+        // System Circle to Search via the selected trigger service.
         release()
         frame?.recycle()
         scope.launch {

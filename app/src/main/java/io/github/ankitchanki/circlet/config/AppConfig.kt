@@ -19,7 +19,11 @@ enum class Language(val id: Int, val toLocale: () -> Locale) {
     Vietnamese(R.string.vietnamese, { Locale("vi") }),
 }
 
-enum class TriggerService(val isSupported: Boolean, val needsShizuku: Boolean) {
+/**
+ * [needsShizukuRoot]: CSService checks ACCESS_CONTEXTUAL_SEARCH, which the shell user (Shizuku via
+ * ADB) doesn't hold, so it only works when Shizuku runs as root.
+ */
+enum class TriggerService(val isSupported: Boolean, val needsShizukuRoot: Boolean) {
     VIS(true, false),
     @SuppressLint("PrivateApi")
     CSService(
@@ -57,6 +61,9 @@ object AppConfig {
     const val KEY_TRIGGER_SERVICE = "trigger_service"
     const val KEY_CORNER_GESTURE = "corner_gesture"
     const val KEY_GESTURE_ACTION = "gesture_action"
+    const val KEY_BLOCK_ASSIST_GESTURE = "block_assist_gesture"
+    /** Original value of the system assist gesture setting, kept while Circlet has it turned off. */
+    const val KEY_SAVED_ASSIST_GESTURE = "saved_assist_gesture"
 
     val DEFAULT_CONFIG = mapOf<String, Any>(
         KEY_LANGUAGE to Language.FollowSystem.ordinal,
@@ -67,5 +74,6 @@ object AppConfig {
         KEY_TRIGGER_SERVICE to TriggerService.VIS.ordinal,
         KEY_CORNER_GESTURE to false,
         KEY_GESTURE_ACTION to GestureAction.BuiltInLasso.ordinal,
+        KEY_BLOCK_ASSIST_GESTURE to true,
     )
 }

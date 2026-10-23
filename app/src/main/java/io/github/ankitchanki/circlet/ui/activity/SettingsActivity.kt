@@ -263,6 +263,7 @@ fun SettingsPage(
         val canDrawOverlays by viewModel.canDrawOverlays.collectAsState()
         val assistantResult by viewModel.assistantResult.collectAsState()
         val shizukuGranted = shizukuStatus == ShizukuStatus.Granted
+        val shizukuIsRoot by viewModel.shizukuIsRoot.collectAsState()
         val context = LocalContext.current
 
         SectionHeader(stringResource(R.string.shizuku_settings))
@@ -314,7 +315,9 @@ fun SettingsPage(
             trailingContent = {
                 Box {
                     var triggerServiceExpanded by remember { viewModel.triggerServiceExpanded }
-                    val selectedOption = TriggerService.entries[appConfig[AppConfig.KEY_TRIGGER_SERVICE] as Int].name
+                    val selectedOption = TriggerService.entries[appConfig[AppConfig.KEY_TRIGGER_SERVICE] as Int].let {
+                        if (it.needsShizukuRoot && !shizukuIsRoot) "${it.name} → ${TriggerService.VIS.name}" else it.name
+                    }
                     val options = TriggerService.getSupportedServices()
 
                     TextButton(onClick = { triggerServiceExpanded = true }) {
@@ -330,7 +333,7 @@ fun SettingsPage(
                         options.forEach { option ->
                             DropdownMenuItem(
                                 text = { Text(option.name) },
-                                enabled = !option.needsShizuku || shizukuGranted,
+                                enabled = !option.needsShizukuRoot || shizukuIsRoot,
                                 onClick = {
                                     triggerServiceExpanded = false
                                     viewModel.updateAppConfig(AppConfig.KEY_TRIGGER_SERVICE, option.ordinal)
@@ -390,6 +393,21 @@ fun SettingsPage(
                             )
                         }
                     }
+                )
+            }
+        )
+
+        ListItem(
+            leadingContent = { Icon(painterResource(R.drawable.ic_assistant), contentDescription = null) },
+            headlineContent = { Text(stringResource(R.string.block_assist_gesture)) },
+            supportingContent = {
+                Text(stringResource(if (shizukuGranted) R.string.block_assist_gesture_summary else R.string.requires_shizuku))
+            },
+            trailingContent = {
+                Switch(
+                    enabled = shizukuGranted,
+                    checked = appConfig[AppConfig.KEY_BLOCK_ASSIST_GESTURE] as Boolean,
+                    onCheckedChange = { viewModel.updateAppConfig(AppConfig.KEY_BLOCK_ASSIST_GESTURE, it) }
                 )
             }
         )

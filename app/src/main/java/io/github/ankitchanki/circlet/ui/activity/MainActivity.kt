@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
             prefs.getInt(KEY_TRIGGER_SERVICE, DEFAULT_CONFIG[KEY_TRIGGER_SERVICE] as Int)
         )
         // Shizuku delivers the user service connection on the main thread, so never block it.
-        val async = triggerService?.needsShizuku == true ||
+        val async = triggerService?.needsShizukuRoot == true ||
             prefs.getBoolean(KEY_ASYNC_TRIGGER, DEFAULT_CONFIG[KEY_ASYNC_TRIGGER] as Boolean)
         if (async) {
             lifecycleScope.launch {

@@ -13,7 +13,7 @@ Forked from [parallelcc/MiCTS](https://github.com/parallelcc/micts) (GPL-3.0). A
 | MiCTS (LSPosed) | Circlet |
 | --- | --- |
 | Hooks system_server / launcher / Google | No hooks; privileged calls run in a Shizuku user service (shell or root) |
-| `VIS`, `CSHelper`, `CSService` trigger services | `VIS` (no Shizuku needed) and `CSService` (via Shizuku) |
+| `VIS`, `CSHelper`, `CSService` trigger services | `VIS` (no Shizuku needed) and `CSService` (needs Shizuku started with root) |
 | Xiaomi long press handle / home button | Diagonal corner swipe gesture, works on any device |
 | Device spoof for Google | Removed (it needs hooking). If Google has disabled Circle to Search on your device, you still need root + GMS flags, as in MiCTS |
 
@@ -28,11 +28,12 @@ Forked from [parallelcc/MiCTS](https://github.com/parallelcc/micts) (GPL-3.0). A
 ### Settings
 - **System trigger service**
   - `VIS`: works without Shizuku when Google is the default assistant.
-  - `CSService`: Android 15+. Calls `IContextualSearchManager.startContextualSearch` as shell through Shizuku. Only works where the system has the contextual search service enabled. Falls back to `VIS` if Shizuku is unavailable.
+  - `CSService`: Android 15+. Calls `IContextualSearchManager.startContextualSearch` through Shizuku. Needs Shizuku **started with root**: the shell user (Shizuku via ADB/wireless debugging) lacks `ACCESS_CONTEXTUAL_SEARCH`. Also needs the system's contextual search service to exist (Pixel-like config). Otherwise Circlet uses `VIS`.
 - **Corner swipe gesture**: needs "Display over other apps". When Shizuku is connected, this permission is granted automatically.
+- **Stop Gemini on corner swipe** (on by default): Android's own "swipe from corner to invoke assistant" gesture takes the same swipe and opens the default assistant (Gemini). With Shizuku, Circlet turns that system gesture off (`settings put secure assist_touch_gesture_enabled 0`) while the corner gesture is on, and restores your original setting when you turn it off. OEM launchers with their own assistant gesture setting need it turned off manually.
 - **Gesture action**
   - `Built-in lasso`: freezes the screen (screenshot via `screencap` over Shizuku). You draw a lasso or box, and the selected region is sent to Google Lens.
-  - `System Circle to Search`: plays the animation, then invokes the real Circle to Search using the selected trigger service.
+  - `System Circle to Search`: plays the animation, then invokes the real Circle to Search using the selected trigger service. With `VIS`, Google decides what opens: if Circle to Search isn't enabled for your device, Google may open Gemini instead. Use `Built-in lasso` in that case.
 
 ## Corner gesture design
 

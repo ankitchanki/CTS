@@ -27,8 +27,10 @@ object CircleToSearchTrigger {
         )?.takeIf { it.isSupported } ?: TriggerService.VIS
 
         val result = when (service) {
-            // Fall back to VIS when CSService can't run (Shizuku stopped or permission revoked).
-            TriggerService.CSService -> ShizukuManager.startContextualSearch(entryPoint) || triggerViaVis(entryPoint)
+            // The call is oneway, so a permission failure is silent: only use it when Shizuku has
+            // root, otherwise go straight to VIS.
+            TriggerService.CSService ->
+                (ShizukuManager.isRoot.value && ShizukuManager.startContextualSearch(entryPoint)) || triggerViaVis(entryPoint)
             TriggerService.VIS -> triggerViaVis(entryPoint)
         }
         if (result && vibrate) {

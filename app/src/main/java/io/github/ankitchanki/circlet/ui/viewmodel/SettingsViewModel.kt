@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.ankitchanki.circlet.config.AppConfig
 import io.github.ankitchanki.circlet.config.Language
 import io.github.ankitchanki.circlet.overlay.GestureOverlayService
+import io.github.ankitchanki.circlet.shizuku.AssistGestureBlocker
 import io.github.ankitchanki.circlet.shizuku.ShizukuManager
 import io.github.ankitchanki.circlet.shizuku.ShizukuStatus
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val locale: StateFlow<Locale> = _locale
 
     val shizukuStatus: StateFlow<ShizukuStatus> = ShizukuManager.status
+    val shizukuIsRoot: StateFlow<Boolean> = ShizukuManager.isRoot
 
     private val _canDrawOverlays = MutableStateFlow(Settings.canDrawOverlays(application))
     val canDrawOverlays: StateFlow<Boolean> = _canDrawOverlays
@@ -70,8 +72,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 is Int -> appConfigPref.edit().putInt(key, value).commit()
                 is Boolean -> appConfigPref.edit().putBoolean(key, value).commit()
             }
-            if (key == AppConfig.KEY_CORNER_GESTURE) {
+            if (key == AppConfig.KEY_CORNER_GESTURE || key == AppConfig.KEY_BLOCK_ASSIST_GESTURE) {
                 launch(Dispatchers.Main) { GestureOverlayService.sync(getApplication()) }
+                AssistGestureBlocker.sync(getApplication())
             }
         }
     }
@@ -81,6 +84,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         ShizukuManager.refresh()
         _canDrawOverlays.value = Settings.canDrawOverlays(getApplication())
         GestureOverlayService.sync(getApplication())
+        // Shizuku may have just been granted: apply the assistant-gesture choice now.
+        viewModelScope.launch { AssistGestureBlocker.sync(getApplication()) }
     }
 
     /**

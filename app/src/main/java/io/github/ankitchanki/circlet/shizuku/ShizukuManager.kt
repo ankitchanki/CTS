@@ -40,6 +40,10 @@ object ShizukuManager {
     private val _status = MutableStateFlow(ShizukuStatus.NotRunning)
     val status: StateFlow<ShizukuStatus> = _status
 
+    /** Shizuku started with root (uid 0) rather than through ADB (shell, uid 2000). */
+    private val _isRoot = MutableStateFlow(false)
+    val isRoot: StateFlow<Boolean> = _isRoot
+
     private val bindMutex = Mutex()
     @Volatile private var shellService: IShellService? = null
     private var pendingBind: CompletableDeferred<IShellService?>? = null
@@ -87,6 +91,7 @@ object ShizukuManager {
             isShizukuInstalled() -> ShizukuStatus.NotRunning
             else -> ShizukuStatus.NotInstalled
         }
+        _isRoot.value = _status.value == ShizukuStatus.Granted && runCatching { Shizuku.getUid() == 0 }.getOrDefault(false)
     }
 
     val isGranted: Boolean
@@ -140,13 +145,16 @@ object ShizukuManager {
     }
 
     /** Returns true when the command exited with status 0. */
-    suspend fun exec(command: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun exec(command: String): Boolean = execOutput(command) != null
+
+    /** Returns the command's output when it exited with status 0, otherwise null. */
+    suspend fun execOutput(command: String): String? = withContext(Dispatchers.IO) {
         runCatching {
-            val result = shell()?.exec(command) ?: return@runCatching false
+            val result = shell()?.exec(command) ?: return@runCatching null
             val exitCode = result.substringBefore('\n').toIntOrNull()
             if (exitCode != 0) Log.w(TAG, "`$command` failed: $result")
-            exitCode == 0
-        }.onFailure { e -> Log.e(TAG, "exec via Shizuku failed", e) }.getOrDefault(false)
+            if (exitCode == 0) result.substringAfter('\n').trim() else null
+        }.onFailure { e -> Log.e(TAG, "exec via Shizuku failed", e) }.getOrNull()
     }
 
     /** Lets the corner gesture overlay run without the user visiting system settings. */
