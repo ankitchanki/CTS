@@ -1,15 +1,15 @@
 [versions]
 accompanist-drawablepainter = "0.37.3"
-agp = "9.1.0"
-hiddenapibypass = "6.1"
-kotlin = "2.3.20"
-material = "1.13.0"
+agp = "9.4.1"
+hiddenapibypass = "6.2"
+kotlin = "2.4.21"
+material = "1.14.0"
 shizuku = "13.1.5"
 junit = "4.13.2"
-core-ktx = "1.17.0"
+core-ktx = "1.19.1"
 lifecycle-runtime-ktx = "2.10.0"
 activity-compose = "1.13.0"
-compose-bom = "2026.03.01"
+compose-bom = "2026.09.00"
 animation-core-android = "1.10.6"
 animation-android = "1.10.6"
 
@@ -36,7 +36,7 @@ androidx-material-icons-extended = { group = "androidx.compose.material", name =
 android-application = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-lsplugin-jgit = { id = "org.lsposed.lsplugin.jgit", version = "1.1" }
-lsplugin-apksign = { id = "org.lsposed.lsplugin.apksign", version = "1.4" }
+lsplugin-jgit = { id = "org.lsposed.lsplugin.jgit", version = "1.2" }
+lsplugin-apksign = { id = "org.lsposed.lsplugin.apksign", version = "1.5" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
