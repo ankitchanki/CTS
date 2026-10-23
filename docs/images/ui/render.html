@@ -1,0 +1,104 @@
+<!doctype html><html><body style="margin:0;background:#fff">
+<canvas id="c"></canvas>
+<script>
+// Port of Circlet's overlay drawing (EffectsView, EdgeGlowRenderer, SelectionOverlayView) using the
+// same constants and curves as gesture/GestureVisuals.kt, for README renders.
+const W = 360, H = 780, DPR = 3;
+const BLUE='#4285F4', RED='#EA4335', YELLOW='#FBBC04', GREEN='#34A853';
+const BEAM=[BLUE,RED,YELLOW,GREEN,BLUE];
+const lerp=(a,b,t)=>a+(b-a)*t;
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const easeOut=t=>1-Math.pow(1-clamp(t,0,1),3);
+const easeInOut=t=>{t=clamp(t,0,1);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2};
+const smooth=(e0,e1,x)=>{const t=clamp((x-e0)/(e1-e0),0,1);return t*t*(3-2*t)};
+function visuals(p){p=clamp(p,0,1);const e=easeOut(p),inv=smooth(0,.35,p);return{
+  scale:lerp(1,.96,e),radiusF:e,scrim:.55*p,handleAlpha:1-inv,handleLen:lerp(.4,1,inv),
+  reach:lerp(.15,1,e),thick:lerp(.2,1,p),beamAlpha:smooth(.05,.4,p),glow:smooth(0,.85,p)}}
+const CORNER_R=34, NAV=24;
+
+function drawApp(ctx){ // generic placeholder app
+  ctx.fillStyle='#F6F7FB';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#202124';ctx.font='600 12px Roboto, sans-serif';ctx.fillText('9:41',22,24);
+  ctx.fillRect(W-58,15,30,11);ctx.fillRect(W-24,15,4,11);
+  ctx.font='700 26px Roboto, sans-serif';ctx.fillText('Discover',22,78);
+  rr(ctx,22,94,W-44,44,22,'#E8EAF0');ctx.fillStyle='#80868B';ctx.font='15px Roboto, sans-serif';ctx.fillText('Search places, food, ideas',46,121);
+  // hero card with a landscape
+  ctx.save();rrPath(ctx,22,156,W-44,210,22);ctx.clip();
+  let g=ctx.createLinearGradient(0,156,0,366);g.addColorStop(0,'#8EC5FC');g.addColorStop(1,'#E0C3FC');ctx.fillStyle=g;ctx.fillRect(22,156,W-44,210);
+  ctx.fillStyle='#FFD36E';ctx.beginPath();ctx.arc(250,210,26,0,7);ctx.fill();
+  ctx.fillStyle='#5B7DB1';ctx.beginPath();ctx.moveTo(22,366);ctx.lineTo(120,250);ctx.lineTo(190,320);ctx.lineTo(250,262);ctx.lineTo(338,366);ctx.fill();
+  ctx.fillStyle='#3E5E8E';ctx.beginPath();ctx.moveTo(22,366);ctx.lineTo(90,300);ctx.lineTo(160,366);ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='#202124';ctx.font='700 18px Roboto, sans-serif';ctx.fillText('Lake Louise at sunrise',22,396);
+  ctx.fillStyle='#5F6368';ctx.font='14px Roboto, sans-serif';ctx.fillText('Banff National Park · 4.9 ★',22,418);
+  [['Hiking',22],['Photography',100],['Camping',220]].forEach(([t,x])=>{rr(ctx,x,436,ctx.measureText(t).width+28,32,16,'#E8F0FE');ctx.fillStyle='#1967D2';ctx.fillText(t,x+14,457)});
+  for(let i=0;i<3;i++){const y=490+i*86;rr(ctx,22,y,70,70,16,['#FCE8E6','#E6F4EA','#FEF7E0'][i]);
+    ctx.fillStyle='#202124';ctx.font='600 15px Roboto, sans-serif';ctx.fillText(['Moraine Lake trail','Peyto viewpoint','Johnston Canyon'][i],106,y+26);
+    ctx.fillStyle='#80868B';ctx.font='13px Roboto, sans-serif';ctx.fillText(['5.2 km · Moderate','1.4 km · Easy','2.7 km · Easy'][i],106,y+48);}
+  ctx.fillStyle='#202124';rr(ctx,W/2-54,H-14,108,5,3,'#202124'); // gesture handle
+}
+function rrPath(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function rr(ctx,x,y,w,h,r,fill){rrPath(ctx,x,y,w,h,r);ctx.fillStyle=fill;ctx.fill()}
+
+function beamGradient(ctx){ // sweep over the 270..360° quadrant, faded at both ends (EffectsView.createBeamShader)
+  const g=ctx.createConicGradient(0,0,H);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.75,'rgba(0,0,0,0)');
+  BEAM.forEach((c,i)=>g.addColorStop(.75+.25*(.1+.8*i/4),c));g.addColorStop(1,'rgba(0,0,0,0)');return g}
+function drawBeam(ctx,v,mirror){ if(v.beamAlpha<=0)return;
+  ctx.save(); if(mirror){ctx.translate(W,0);ctx.scale(-1,1)}
+  const r=200*v.reach, stroke=lerp(4,40,v.thick), g=beamGradient(ctx);
+  ctx.strokeStyle=g;ctx.lineCap='round';
+  ctx.filter='blur(22px)';ctx.globalAlpha=v.beamAlpha*.75;ctx.lineWidth=stroke*1.6;ctx.beginPath();ctx.arc(0,H,r,1.5*Math.PI,2*Math.PI);ctx.stroke();
+  ctx.filter='none';ctx.globalAlpha=v.beamAlpha;ctx.lineWidth=stroke*.45;ctx.beginPath();ctx.arc(0,H,r,1.5*Math.PI,2*Math.PI);ctx.stroke();
+  // handle lines
+  if(v.handleAlpha>0){const R=CORNER_R,ins=6,ext=22*v.handleLen,inner=R-ins;ctx.globalAlpha=v.handleAlpha*.9;ctx.strokeStyle='#fff';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(R+ext,H-ins);ctx.lineTo(R,H-ins);ctx.arc(R,H-R,inner,.5*Math.PI,Math.PI);ctx.lineTo(ins,H-R-ext);ctx.stroke();}
+  ctx.restore()}
+function drawEdgeGlow(ctx,intensity,boost=0,rot=40){ if(intensity<=0)return;
+  const g=ctx.createConicGradient(rot*Math.PI/180,W/2,H/2);BEAM.forEach((c,i)=>g.addColorStop(i/4,c));
+  const s=Math.min(intensity*(1+.6*boost),1.6);ctx.save();ctx.strokeStyle=g;
+  [[46*s,.55*intensity,26],[18*s,.85*intensity,9],[4*s,intensity,0]].forEach(([w,a,b])=>{ctx.filter=b?`blur(${b}px)`:'none';ctx.globalAlpha=Math.min(a,1);ctx.lineWidth=w;rrPath(ctx,0,0,W,H,CORNER_R);ctx.stroke()});
+  ctx.restore()}
+function drawShimmer(ctx,t){const hw=.22,c=lerp(-hw,1+hw,easeInOut(t)),a=.65*Math.sin(Math.PI*t);
+  const at=f=>[lerp(W,0,f),lerp(H,0,f)];const [x1,y1]=at(c-hw),[x2,y2]=at(c+hw);
+  const g=ctx.createLinearGradient(x1,y1,x2,y2);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,`rgba(255,255,255,${a})`);g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+
+function frame(ctx,app,{p=0,shimmer=null,boost=0,scaleOverride=null,live=false}){
+  const v=visuals(p);
+  if(live){ctx.drawImage(app,0,0,W,H)} else {
+    ctx.drawImage(app,0,0,W,H); // live screen behind the translucent overlay
+    ctx.fillStyle=`rgba(0,0,0,${v.scrim})`;ctx.fillRect(0,0,W,H);
+    ctx.save();const sc=scaleOverride??v.scale;ctx.translate(W/2,H/2);ctx.scale(sc,sc);ctx.translate(-W/2,-H/2);
+    rrPath(ctx,0,0,W,H,32*v.radiusF);ctx.clip();ctx.drawImage(app,0,0,W,H);if(shimmer!=null)drawShimmer(ctx,shimmer);ctx.restore();
+  }
+  drawEdgeGlow(ctx,v.glow,boost);drawBeam(ctx,v,true);
+}
+function selection(ctx,app,{lasso=false,box=false}){
+  ctx.drawImage(app,0,0,W,H);
+  const pal=ctx.createLinearGradient(0,0,W,H);BEAM.forEach((c,i)=>pal.addColorStop(i/4,c));
+  if(lasso){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(0,0,W,H);
+    const path=new Path2D('M 200 168 C 110 150 30 200 40 268 C 50 340 190 384 290 352 C 350 330 346 230 300 190 C 268 164 226 160 214 176');
+    ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=pal;ctx.lineWidth=14;ctx.filter='blur(10px)';ctx.stroke(path);ctx.filter='none';ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.stroke(path);ctx.restore();}
+  if(box){const x=24,y=150,w=W-48,h=222,r=20;ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.roundRect(x,y,w,h,r);ctx.fillStyle='rgba(0,0,0,.45)';ctx.fill('evenodd');ctx.restore();
+    ctx.save();ctx.strokeStyle=pal;ctx.lineWidth=14;ctx.filter='blur(10px)';rrPath(ctx,x,y,w,h,r);ctx.stroke();ctx.filter='none';ctx.strokeStyle='#fff';ctx.lineWidth=5;rrPath(ctx,x,y,w,h,r);ctx.stroke();ctx.restore();}
+  if(!lasso&&!box){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(0,0,W,H);const t='Circle or draw a box to search';ctx.font='15px Roboto, sans-serif';const tw=ctx.measureText(t).width;
+    rr(ctx,W/2-tw/2-20,72,tw+40,40,20,'rgba(32,33,36,.78)');ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(t,W/2,97);ctx.textAlign='left'}
+  drawEdgeGlow(ctx,box?.3:.55);
+}
+function zones(ctx,app){ctx.drawImage(app,0,0,W,H);const z=40,y=H-NAV-z;
+  ctx.fillStyle='rgba(32,33,36,.08)';ctx.fillRect(0,H-NAV,W,NAV);
+  [[0,y],[W-z,y]].forEach(([x,yy])=>{ctx.fillStyle='rgba(66,133,244,.22)';ctx.fillRect(x,yy,z,z);ctx.setLineDash([4,3]);ctx.strokeStyle=BLUE;ctx.lineWidth=1.5;ctx.strokeRect(x+.75,yy+.75,z-1.5,z-1.5);ctx.setLineDash([])});
+  ctx.strokeStyle=BLUE;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(W-20,y+20);ctx.lineTo(W-110,y-70);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W-110,y-70);ctx.lineTo(W-96,y-70);ctx.moveTo(W-110,y-70);ctx.lineTo(W-110,y-56);ctx.stroke();
+  ctx.font='600 12px Roboto, sans-serif';const lt='40dp zones, above the nav bar',lw=ctx.measureText(lt).width;
+  rr(ctx,W-lw-40,y-104,lw+20,26,13,'rgba(255,255,255,.96)');ctx.fillStyle='#1967D2';ctx.fillText(lt,W-lw-30,y-86);
+  ctx.fillStyle='#5F6368';ctx.font='11px Roboto, sans-serif';ctx.fillText('system strip (not touched)',W/2-62,H-NAV-6);
+}
+async function render(kind,opts){
+  const c=document.getElementById('c');c.width=W*DPR;c.height=H*DPR;const ctx=c.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
+  const app=document.createElement('canvas');app.width=W*DPR;app.height=H*DPR;const a=app.getContext('2d');a.setTransform(DPR,0,0,DPR,0,0);drawApp(a);
+  ctx.save();rrPath(ctx,0,0,W,H,CORNER_R);ctx.clip();
+  if(kind==='frame')frame(ctx,app,opts);else if(kind==='selection')selection(ctx,app,opts);else zones(ctx,app);
+  ctx.restore();return c.toDataURL('image/png');
+}
+window.render=render;
+</script></body></html>
