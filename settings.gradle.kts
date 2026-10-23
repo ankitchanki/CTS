@@ -19,14 +19,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        mavenLocal {
-            content {
-                includeGroup("io.github.libxposed")
-            }
-        }
     }
 }
 
-rootProject.name = "MiCTS"
+rootProject.name = "ShizukuCTS"
 include(":app")
  

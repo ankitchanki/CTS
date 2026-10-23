@@ -1,89 +1,64 @@
-# MiCTS
+# ShizukuCTS
 
-[![Stars](https://img.shields.io/github/stars/parallelcc/MiCTS)](https://github.com/parallelcc/MiCTS) [![Downloads](https://img.shields.io/github/downloads/parallelcc/MiCTS/total)](https://github.com/parallelcc/MiCTS/releases) [![Release](https://img.shields.io/github/v/release/parallelcc/MiCTS)](https://github.com/parallelcc/MiCTS/releases/latest) [![DeepWiki](https://img.shields.io/badge/DeepWiki-parallelcc%2FMiCTS-blue.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAyCAYAAAAnWDnqAAAAAXNSR0IArs4c6QAAA05JREFUaEPtmUtyEzEQhtWTQyQLHNak2AB7ZnyXZMEjXMGeK/AIi+QuHrMnbChYY7MIh8g01fJoopFb0uhhEqqcbWTp06/uv1saEDv4O3n3dV60RfP947Mm9/SQc0ICFQgzfc4CYZoTPAswgSJCCUJUnAAoRHOAUOcATwbmVLWdGoH//PB8mnKqScAhsD0kYP3j/Yt5LPQe2KvcXmGvRHcDnpxfL2zOYJ1mFwrryWTz0advv1Ut4CJgf5uhDuDj5eUcAUoahrdY/56ebRWeraTjMt/00Sh3UDtjgHtQNHwcRGOC98BJEAEymycmYcWwOprTgcB6VZ5JK5TAJ+fXGLBm3FDAmn6oPPjR4rKCAoJCal2eAiQp2x0vxTPB3ALO2CRkwmDy5WohzBDwSEFKRwPbknEggCPB/imwrycgxX2NzoMCHhPkDwqYMr9tRcP5qNrMZHkVnOjRMWwLCcr8ohBVb1OMjxLwGCvjTikrsBOiA6fNyCrm8V1rP93iVPpwaE+gO0SsWmPiXB+jikdf6SizrT5qKasx5j8ABbHpFTx+vFXp9EnYQmLx02h1QTTrl6eDqxLnGjporxl3NL3agEvXdT0WmEost648sQOYAeJS9Q7bfUVoMGnjo4AZdUMQku50McDcMWcBPvr0SzbTAFDfvJqwLzgxwATnCgnp4wDl6Aa+Ax283gghmj+vj7feE2KBBRMW3FzOpLOADl0Isb5587h/U4gGvkt5v60Z1VLG8BhYjbzRwyQZemwAd6cCR5/XFWLYZRIMpX39AR0tjaGGiGzLVyhse5C9RKC6ai42ppWPKiBagOvaYk8lO7DajerabOZP46Lby5wKjw1HCRx7p9sVMOWGzb/vA1hwiWc6jm3MvQDTogQkiqIhJV0nBQBTU+3okKCFDy9WwferkHjtxib7t3xIUQtHxnIwtx4mpg26/HfwVNVDb4oI9RHmx5WGelRVlrtiw43zboCLaxv46AZeB3IlTkwouebTr1y2NjSpHz68WNFjHvupy3q8TFn3Hos2IAk4Ju5dCo8B3wP7VPr/FGaKiG+T+v+TQqIrOqMTL1VdWV1DdmcbO8KXBz6esmYWYKPwDL5b5FA1a0hwapHiom0r/cKaoqr+27/XcrS5UwSMbQAAAABJRU5ErkJggg==)](https://deepwiki.com/parallelcc/MiCTS)
+Trigger Circle to Search on Android 9–16, using **Shizuku** instead of an LSPosed module. It also adds a Pixel-style diagonal corner swipe gesture.
 
-简体中文&nbsp;&nbsp;|&nbsp;&nbsp;[English](/README_en.md)&nbsp;&nbsp;|&nbsp;&nbsp;[Русский](/README_ru.md)&nbsp;&nbsp;|&nbsp;&nbsp;[Türkçe](/README_tr.md)&nbsp;&nbsp;|&nbsp;&nbsp;[فارسی](/README_fa.md)
+Forked from [parallelcc/MiCTS](https://github.com/parallelcc/micts) (GPL-3.0). All credit for the original trigger work goes to that project.
 
-在任意Android 9–16设备上触发圈定即搜（Circle to Search）功能
+## What changed from MiCTS
 
-*本应用只负责触发圈定即搜，无法处理触发成功后可能出现的问题*
+| MiCTS (LSPosed) | ShizukuCTS |
+| --- | --- |
+| Hooks system_server / launcher / Google | No hooks; privileged calls run in a Shizuku user service (shell or root) |
+| `VIS`, `CSHelper`, `CSService` trigger services | `VIS` (no Shizuku needed) and `CSService` (via Shizuku) |
+| Xiaomi long press handle / home button | Diagonal corner swipe gesture, works on any device |
+| Device spoof for Google | Removed (it needs hooking). If Google has disabled Circle to Search on your device, you still need root + GMS flags, as in MiCTS |
 
-## 使用方法
+## How to use
 
-1. 安装最新版[Google](https://play.google.com/store/apps/details?id=com.google.android.googlequicksearchbox)应用，开启自启动，关闭后台限制，将默认助理应用设置为Google
+1. Install the latest [Google](https://play.google.com/store/apps/details?id=com.google.android.googlequicksearchbox) app and set it as the default assistant. Once Shizuku is connected, the settings page can do this for you.
+2. Install and start [Shizuku](https://shizuku.rikka.app/), then open ShizukuCTS settings and tap **Grant**.
+3. Trigger it:
+   - Launch the app, use the Quick Settings tile, or point any automation app (Quick Ball, ShortX, Routines+…) at it.
+   - Or turn on **Corner swipe gesture** and swipe diagonally inward from the bottom-left or bottom-right corner.
 
+### Settings
+- **System trigger service**
+  - `VIS`: works without Shizuku when Google is the default assistant.
+  - `CSService`: Android 15+. Calls `IContextualSearchManager.startContextualSearch` as shell through Shizuku. Only works where the system has the contextual search service enabled. Falls back to `VIS` if Shizuku is unavailable.
+- **Corner swipe gesture**: needs "Display over other apps". When Shizuku is connected, this permission is granted automatically.
+- **Gesture action**
+  - `Built-in lasso`: freezes the screen (screenshot via `screencap` over Shizuku). You draw a lasso or box, and the selected region is sent to Google Lens.
+  - `System Circle to Search`: plays the animation, then invokes the real Circle to Search using the selected trigger service.
 
-2. 安装并打开MiCTS
-    - 如果幸运的话，在不需要root的情况下，打开MiCTS就会直接触发圈定即搜
-    - 如果没有反应，大概率是因为Google对你的设备禁用了圈定即搜功能（可以通过在Logcat日志中查找`Omni invocation failed: not enabled`确认），在有root的情况下，可以尝试以下方法：
-        - 在LSPosed里激活模块，在[MiCTS设置](#进入设置的方式)里开启`Google机型伪装`后，强制重启Google
-        - 如果还是不行，使用[GMS-Flags](https://github.com/polodarb/GMS-Flags)，将`com.google.android.apps.search.omnient.device`的flag`45631784`设为true
+## Corner gesture design
 
+The code keeps the math separate from the drawing:
 
-3. 设置触发方式
-    - 打开MiCTS即可触发，因此可以利用其他软件，比如悬浮球、Xposed Edge、ShortX等，将动作设置为打开MiCTS，实现自定义触发方式
-    - MiCTS提供了一个触发磁贴，可将其添加到快速设置面板里，通过点击磁贴触发
-    - 对于小米设备，MiCTS内置了长按小白条触发和长按Home键触发的功能，可以在MiCTS设置里开启（安装MiCTS后需要激活模块并重启手机才能使用）
-    - 对于Android版本>=13的三星设备，可以从[三星应用商店](https://galaxystore.samsung.com/detail/com.samsung.android.app.routineplus)或[Good Lock](https://galaxystore.samsung.com/detail/com.samsung.android.goodlock)里下载安装“日常程序+”，然后在“设置-模式和日常程序”里，创建日常程序通过按钮操作实现长按电源按钮等方式来启动MiCTS
+```
+gesture/CornerVectorMath.kt      pure vector math: corner zones, 45° inward direction, angle deviation, linear progress
+gesture/CornerGestureTracker.kt  pure state machine: Idle → Tracking → Activated / Cancelled
+gesture/GestureVisuals.kt        pure mapping progress/time → scale 1.0→0.96, corner radius, beam, shimmer
+gesture/SelectionGeometry.kt     pure lasso → bounding box → bitmap pixels
+gesture/CornerGestureController  glue: MotionEvents → tracker → visuals → views, capture, hand-off
+overlay/CornerTouchView          40dp × 40dp touch zones in each bottom corner
+overlay/EffectsView              recessed card, corner handle → Pixel-colour crescent, white shimmer
+overlay/SelectionOverlayView     frozen frame + lasso drawing (Circle to Search mode)
+overlay/ScreenCapture            screencap through the Shizuku shell service
+```
 
-## 设置
+Lifecycle:
+1. A touch must start inside a 40dp square in a bottom corner. Movement must stay within ±30° of the 45° inward/upward diagonal. Progress is the finger's extra distance from the corner divided by 140dp, which is linear.
+2. As progress grows, the corner handle lines turn into a blue/red/yellow/green crescent. The frozen frame scales from 1.0 to 0.96 into a rounded card.
+3. When progress reaches 1.0 before release, the viewport locks: haptic feedback, a white shimmer across the frame, then the card settles back.
+4. Circle to Search mode then shows the frozen frame as a static overlay with lasso/box selection.
 
-### 进入设置的方式
-- 长按MiCTS应用图标，出现设置选项，点击进入
-- 从LSPosed模块页面，点击MiCTS，再点击设置图标进入
-- 长按快速设置面板的磁贴进入
+The pure parts are unit tested (`./gradlew :app:testDebugUnitTest`).
 
-### 应用设置
-- 默认触发延迟：通过打开MiCTS触发的延迟
-- 磁贴触发延迟：通过点击快速设置面板的磁贴触发的延迟
+### Known limitations
+- Overlay windows sit below the status and navigation bars, so the real bars stay on top of the recessed frame.
+- With gesture navigation, some launchers claim upward swipes from the bottom edge, which cancels the corner gesture. Swipe more sideways, or use 3-button navigation.
+- The recessed-window and freeze effects need Shizuku (for `screencap`). Without it you still get the beam animation and the system trigger.
 
-### 模块设置
-需要在LSPosed里激活模块
+## License
 
-- 系统触发服务：触发所使用的系统服务，只会显示当前支持的选项，依赖作用域选择系统框架
-   - VIS：支持Android 9–16，需要将默认助理应用设置为Google，触发时一些设备的屏幕边缘会闪，没有激活模块的情况下只能使用此服务
-   - CSHelper：支持Android 14 QPR3及以上，不需要设置默认助理应用，触发时屏幕边缘不会闪
-   - CSService：支持Android 15及以上，圈定即搜专用的服务，效果同CSHelper
-
-
-- 长按小白条触发：仅支持小米设备，依赖作用域选择系统桌面
-
-
-- 长按Home键触发：仅支持小米设备，依赖作用域选择系统框架
-
- 
-- Google机型伪装：依赖作用域选择Google
-   - 制造商：修改Google读取到的ro.product.manufacturer
-   - 品牌：修改Google读取到的ro.product.brand
-   - 型号：修改Google读取到的ro.product.model
-   - 设备：修改Google读取到的ro.product.device 
-
-## 常见问题
-
-### 提示“触发失败！”
-
-大概率是没有将Google设为默认助理，检查一下
-
-### 触发出来是Google助理，不是圈定即搜
-
-Google不是最新版，更新一下
-
-### 有时无法成功触发，手动打开Google后才会出现刚才圈定即搜的界面
-
-原因应该是墓碑机制导致的，看看手机有没有相关的设置可以把Google加到白名单里，比如电池优化选择无限制等，在模块设置里`系统触发服务`使用`CSHelper`应该没有这个问题
-
-## 贡献翻译
-
-你可以通过[Crowdin](https://crowdin.com/project/micts)贡献翻译
-
-如果你需要贡献一个新的语言，请先提交一个issue
-
-## Star History
-
-<a href="https://star-history.com/#parallelcc/micts&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=parallelcc/micts&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=parallelcc/micts&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=parallelcc/micts&type=Date" />
- </picture>
-</a>
+GPL-3.0, same as upstream. See [LICENSE](LICENSE).

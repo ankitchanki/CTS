@@ -15,7 +15,7 @@ apksign {
 }
 
 val repo = jgit.repo()
-val commitCount = (repo?.commitCount("refs/remotes/origin/main") ?: 1)
+val commitCount = (repo?.commitCount("HEAD") ?: 1)
 val latestTag = repo?.latestTag?.removePrefix("v") ?: "1.0"
 
 android {
@@ -23,10 +23,12 @@ android {
     compileSdk = 36
 
     defaultConfig {
+        applicationId = "com.ankitchanki.cts"
         minSdk = 28
         targetSdk = 36
         versionCode = commitCount
         versionName = latestTag
+        buildConfigField("String", "APP_NAME", "\"ShizukuCTS\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -42,32 +44,9 @@ android {
     }
 
     buildFeatures {
+        aidl = true
         buildConfig = true
-        resValues = true
-    }
-
-    flavorDimensions += "app"
-
-    productFlavors {
-        create("MiCTS") {
-            dimension = "app"
-            applicationId = "com.parallelc.micts"
-            buildConfigField("String", "APP_NAME", "\"MiCTS\"")
-        }
-
-        create("VISTrigger") {
-            dimension = "app"
-            applicationId = "com.parallelc.vistrigger"
-            resValue("string", "app_name", "VISTrigger")
-            resValue("string", "tile_label", "VIS")
-            resValue("string", "xposed_description", "Trigger Voice Interaction Service on any Android 9–16 device")
-            buildConfigField("String", "APP_NAME", "\"VISTrigger\"")
-        }
-    }
-
-    buildFeatures {
         compose = true
-        buildConfig = true
     }
 }
 
@@ -79,7 +58,7 @@ androidComponents {
             val vName = output.versionName.get()
             val vCode = output.versionCode.get()
 
-            output.outputFileName.set("MiCTS_${vName}_${vCode}_${variant.name}.apk")
+            output.outputFileName.set("ShizukuCTS_${vName}_${vCode}_${variant.name}.apk")
         }
     }
 }
@@ -89,6 +68,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.androidx.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)
     implementation(platform(libs.compose.bom))
@@ -101,7 +81,8 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.accompanist.drawablepainter)
-    compileOnly(libs.libxposed.api)
-    implementation(libs.libxposed.service)
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
     implementation(libs.hiddenapibypass)
+    testImplementation(libs.junit)
 }

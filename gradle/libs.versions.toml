@@ -4,8 +4,9 @@ agp = "9.1.0"
 hiddenapibypass = "6.1"
 kotlin = "2.3.20"
 material = "1.13.0"
-xposed-api = "101.0.1"
-xposed-service = "101.0.0"
+shizuku = "13.1.5"
+junit = "4.13.2"
+core-ktx = "1.17.0"
 lifecycle-runtime-ktx = "2.10.0"
 activity-compose = "1.13.0"
 compose-bom = "2026.03.01"
@@ -14,8 +15,10 @@ animation-android = "1.10.6"
 
 [libraries]
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenapibypass" }
-libxposed-api = { group = "io.github.libxposed", name = "api", version.ref = "xposed-api" }
-libxposed-service = { group = "io.github.libxposed", name = "service", version.ref = "xposed-service" }
+shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
+shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref = "shizuku" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }

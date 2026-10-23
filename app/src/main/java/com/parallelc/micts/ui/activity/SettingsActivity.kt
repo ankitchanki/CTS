@@ -2,27 +2,25 @@ package com.parallelc.micts.ui.activity
 
 import android.content.Intent
 import android.content.res.Configuration
-import android.os.Build
+import android.net.Uri
+import android.provider.Settings
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -33,7 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -47,7 +44,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -63,15 +59,22 @@ import com.parallelc.micts.BuildConfig
 import com.parallelc.micts.MainApplication
 import com.parallelc.micts.R
 import com.parallelc.micts.config.AppConfig
+import com.parallelc.micts.config.GestureAction
 import com.parallelc.micts.config.Language
 import com.parallelc.micts.config.TriggerService
-import com.parallelc.micts.config.XposedConfig
+import com.parallelc.micts.shizuku.ShizukuManager
+import com.parallelc.micts.shizuku.ShizukuStatus
 import com.parallelc.micts.ui.theme.MiCTSTheme
 import com.parallelc.micts.ui.viewmodel.SettingsViewModel
-import kotlin.system.exitProcess
 
 class SettingsActivity : ComponentActivity() {
     private lateinit var viewModel: SettingsViewModel
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.refreshPermissions()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -187,9 +190,15 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             },
             text = {
                 Text(buildAnnotatedString {
+                    withLink(LinkAnnotation.Url(url = "https://github.com/ankitchanki/cts")) {
+                        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                            append("https://github.com/ankitchanki/cts")
+                        }
+                    }
+                    append("\n\nBased on ")
                     withLink(LinkAnnotation.Url(url = "https://github.com/parallelcc/micts")) {
                         withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                            append("https://github.com/parallelcc/micts")
+                            append("parallelcc/MiCTS")
                         }
                     }
                 })
@@ -210,18 +219,8 @@ fun SettingsPage(
         modifier = modifier.verticalScroll(remember { viewModel.scrollState })
     ) {
         val appConfig by viewModel.appConfig.collectAsState()
-        val xposedService by viewModel.xposedService.collectAsState()
-        val xposedConfig by viewModel.xposedConfig.collectAsState()
 
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = stringResource(R.string.app_settings),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        )
+        SectionHeader(stringResource(R.string.app_settings))
 
         SliderSettingItem(
             title = stringResource(R.string.default_trigger_delay),
@@ -244,7 +243,6 @@ fun SettingsPage(
                     checked = appConfig[AppConfig.KEY_VIBRATE] as Boolean,
                     onCheckedChange = {
                         viewModel.updateAppConfig(AppConfig.KEY_VIBRATE, it)
-                        xposedService?.run { viewModel.updateXposedConfig(XposedConfig.KEY_VIBRATE, it) }
                     }
                 )
             }
@@ -262,132 +260,181 @@ fun SettingsPage(
             }
         )
 
+        val shizukuStatus by viewModel.shizukuStatus.collectAsState()
+        val canDrawOverlays by viewModel.canDrawOverlays.collectAsState()
+        val assistantResult by viewModel.assistantResult.collectAsState()
+        val shizukuGranted = shizukuStatus == ShizukuStatus.Granted
+        val context = LocalContext.current
+
+        SectionHeader(stringResource(R.string.shizuku_settings))
+
         ListItem(
+            leadingContent = {
+                Icon(
+                    imageVector = if (shizukuGranted) Icons.Default.CheckCircle else Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = if (shizukuGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                )
+            },
             headlineContent = {
                 Text(
-                    text = stringResource(R.string.module_settings),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    stringResource(
+                        when (shizukuStatus) {
+                            ShizukuStatus.Granted -> R.string.shizuku_status_granted
+                            ShizukuStatus.PermissionRequired -> R.string.shizuku_status_permission
+                            ShizukuStatus.NotRunning -> R.string.shizuku_status_not_running
+                            ShizukuStatus.NotInstalled -> R.string.shizuku_status_not_installed
+                        }
+                    )
                 )
+            },
+            trailingContent = {
+                when (shizukuStatus) {
+                    ShizukuStatus.PermissionRequired -> TextButton(onClick = { ShizukuManager.requestPermission() }) {
+                        Text(stringResource(R.string.grant))
+                    }
+                    ShizukuStatus.NotRunning -> TextButton(onClick = { ShizukuManager.openShizukuApp(context) }) {
+                        Text(stringResource(R.string.open))
+                    }
+                    ShizukuStatus.NotInstalled -> TextButton(onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/"))
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                    }) {
+                        Text(stringResource(R.string.open))
+                    }
+                    ShizukuStatus.Granted -> Unit
+                }
             }
         )
-
-        if (xposedService == null) {
-            ListItem(
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                },
-                headlineContent = { Text(stringResource(R.string.access_xposed_service_failed)) },
-                trailingContent = {
-                    val context = LocalContext.current
-                    IconButton(onClick = {
-                        val intent = Intent(context, SettingsActivity::class.java)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                        context.startActivity(intent)
-                        exitProcess(1)
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = null,
-                        )
-                    }
-                }
-            )
-            return@Column
-        }
-
-        if (BuildConfig.APP_NAME == "MiCTS") {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.system_trigger_service)) },
-                trailingContent = {
-                    Box {
-                        var triggerServiceExpanded by remember { viewModel.triggerServiceExpanded }
-                        val selectedOption = TriggerService.entries[xposedConfig[XposedConfig.KEY_TRIGGER_SERVICE] as Int].name
-                        val options = TriggerService.getSupportedServices()
-
-                        TextButton(onClick = { triggerServiceExpanded = true }) {
-                            Text(text = selectedOption)
-                        }
-
-                        if (options.size <= 1) return@Box
-
-                        DropdownMenu(
-                            expanded = triggerServiceExpanded,
-                            onDismissRequest = { triggerServiceExpanded = false }
-                        ) {
-                            options.forEach { option ->
-                                DropdownMenuItem(
-                                    text = { Text(option.name) },
-                                    onClick = {
-                                        triggerServiceExpanded = false
-                                        viewModel.updateXposedConfig(XposedConfig.KEY_TRIGGER_SERVICE, option.ordinal)
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            )
-        }
-
-        val isXiaomi = Build.MANUFACTURER == "Xiaomi"
-        val isMeizu = Build.MANUFACTURER == "meizu"
-        if (isXiaomi) {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.trigger_by_long_press_gesture_handle)) },
-                trailingContent = {
-                    Switch(
-                        checked = xposedConfig[XposedConfig.KEY_GESTURE_TRIGGER] as Boolean,
-                        onCheckedChange = { viewModel.updateXposedConfig(XposedConfig.KEY_GESTURE_TRIGGER, it) }
-                    )
-                }
-            )
-        }
-
-        if (isXiaomi || isMeizu) {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.trigger_by_long_press_home_button)) },
-                trailingContent = {
-                    Switch(
-                        checked = xposedConfig[XposedConfig.KEY_HOME_TRIGGER] as Boolean,
-                        onCheckedChange = { viewModel.updateXposedConfig(XposedConfig.KEY_HOME_TRIGGER, it) }
-                    )
-                }
-            )
-        }
 
         ListItem(
-            headlineContent = { Text(stringResource(R.string.device_spoof_for_google)) },
+            headlineContent = { Text(stringResource(R.string.system_trigger_service)) },
+            trailingContent = {
+                Box {
+                    var triggerServiceExpanded by remember { viewModel.triggerServiceExpanded }
+                    val selectedOption = TriggerService.entries[appConfig[AppConfig.KEY_TRIGGER_SERVICE] as Int].name
+                    val options = TriggerService.getSupportedServices()
+
+                    TextButton(onClick = { triggerServiceExpanded = true }) {
+                        Text(text = selectedOption)
+                    }
+
+                    if (options.size <= 1) return@Box
+
+                    DropdownMenu(
+                        expanded = triggerServiceExpanded,
+                        onDismissRequest = { triggerServiceExpanded = false }
+                    ) {
+                        options.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option.name) },
+                                enabled = !option.needsShizuku || shizukuGranted,
+                                onClick = {
+                                    triggerServiceExpanded = false
+                                    viewModel.updateAppConfig(AppConfig.KEY_TRIGGER_SERVICE, option.ordinal)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        )
+
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.set_google_assistant)) },
+            supportingContent = {
+                Text(
+                    when (assistantResult) {
+                        true -> stringResource(R.string.done)
+                        false -> stringResource(R.string.failed)
+                        null -> stringResource(if (shizukuGranted) R.string.set_google_assistant_summary else R.string.requires_shizuku)
+                    }
+                )
+            },
+            trailingContent = {
+                TextButton(enabled = shizukuGranted, onClick = { viewModel.setGoogleAsAssistant() }) {
+                    Text(stringResource(R.string.grant))
+                }
+            }
+        )
+
+        SectionHeader(stringResource(R.string.gesture_settings))
+
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.corner_gesture)) },
+            supportingContent = {
+                Text(
+                    stringResource(
+                        if (appConfig[AppConfig.KEY_CORNER_GESTURE] as Boolean && !canDrawOverlays) {
+                            R.string.overlay_permission_required
+                        } else {
+                            R.string.corner_gesture_summary
+                        }
+                    )
+                )
+            },
             trailingContent = {
                 Switch(
-                    checked = xposedConfig[XposedConfig.KEY_DEVICE_SPOOF] as Boolean,
-                    onCheckedChange = { viewModel.updateXposedConfig(XposedConfig.KEY_DEVICE_SPOOF, it) }
+                    checked = appConfig[AppConfig.KEY_CORNER_GESTURE] as Boolean,
+                    onCheckedChange = { enabled ->
+                        viewModel.setCornerGesture(enabled) {
+                            context.startActivity(
+                                Intent(
+                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:${context.packageName}")
+                                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        }
+                    }
                 )
             }
         )
 
-        if (xposedConfig[XposedConfig.KEY_DEVICE_SPOOF] as Boolean) {
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .fillMaxWidth()
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                        MaterialTheme.shapes.medium
-                    )
-                    .clip(MaterialTheme.shapes.medium)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                ModelSpoofFields(xposedConfig, viewModel)
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.gesture_action)) },
+            supportingContent = { if (!shizukuGranted) Text(stringResource(R.string.requires_shizuku)) },
+            trailingContent = {
+                Box {
+                    var gestureActionExpanded by remember { viewModel.gestureActionExpanded }
+                    val selected = GestureAction.entries[appConfig[AppConfig.KEY_GESTURE_ACTION] as Int]
+
+                    TextButton(onClick = { gestureActionExpanded = true }) {
+                        Text(text = stringResource(selected.id))
+                    }
+
+                    DropdownMenu(
+                        expanded = gestureActionExpanded,
+                        onDismissRequest = { gestureActionExpanded = false }
+                    ) {
+                        GestureAction.entries.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(stringResource(option.id)) },
+                                onClick = {
+                                    gestureActionExpanded = false
+                                    viewModel.updateAppConfig(AppConfig.KEY_GESTURE_ACTION, option.ordinal)
+                                }
+                            )
+                        }
+                    }
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-        }
+        )
     }
+}
+
+@Composable
+fun SectionHeader(title: String) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    )
 }
 
 @Composable
@@ -422,49 +469,5 @@ fun SliderSettingItem(
             valueRange = valueRange,
             steps = 39
         )
-    }
-}
-
-@Composable
-fun ModelSpoofFields(
-    xposedConfig: Map<String, Any?>,
-    viewModel: SettingsViewModel,
-) {
-     Column(modifier = Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = xposedConfig[XposedConfig.KEY_SPOOF_MANUFACTURER] as String,
-            onValueChange = { viewModel.updateXposedConfig(XposedConfig.KEY_SPOOF_MANUFACTURER, it) },
-            label = { Text(stringResource(R.string.manufacturer)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = xposedConfig[XposedConfig.KEY_SPOOF_BRAND] as String,
-            onValueChange = { viewModel.updateXposedConfig(XposedConfig.KEY_SPOOF_BRAND, it) },
-            label = { Text(stringResource(R.string.brand)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = xposedConfig[XposedConfig.KEY_SPOOF_MODEL] as String,
-            onValueChange = { viewModel.updateXposedConfig(XposedConfig.KEY_SPOOF_MODEL, it) },
-            label = { Text(stringResource(R.string.model)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = xposedConfig[XposedConfig.KEY_SPOOF_DEVICE] as String,
-            onValueChange = { viewModel.updateXposedConfig(XposedConfig.KEY_SPOOF_DEVICE, it) },
-            label = { Text(stringResource(R.string.device)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(8.dp))
     }
 }

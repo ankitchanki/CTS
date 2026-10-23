@@ -1,4 +1,5 @@
 package com.parallelc.micts.config
+import android.annotation.SuppressLint
 import com.parallelc.micts.R
 import java.util.Locale
 
@@ -18,6 +19,34 @@ enum class Language(val id: Int, val toLocale: () -> Locale) {
     Vietnamese(R.string.vietnamese, { Locale("vi") }),
 }
 
+enum class TriggerService(val isSupported: Boolean, val needsShizuku: Boolean) {
+    VIS(true, false),
+    @SuppressLint("PrivateApi")
+    CSService(
+        try {
+            Class.forName("android.app.contextualsearch.ContextualSearchManager")
+            true
+        } catch (_: Exception) {
+            false
+        },
+        true
+    );
+
+    companion object {
+        fun getSupportedServices(): List<TriggerService> {
+            return TriggerService.entries.filter { it.isSupported }
+        }
+    }
+}
+
+/** What happens once the corner swipe gesture reaches full progress. */
+enum class GestureAction(val id: Int) {
+    // Frozen screenshot + lasso selection handled by this app (needs Shizuku for screencap).
+    BuiltInLasso(R.string.gesture_action_lasso),
+    // Hand off to the system / Google Circle to Search via the selected trigger service.
+    SystemCircleToSearch(R.string.gesture_action_system),
+}
+
 object AppConfig {
     const val CONFIG_NAME = "app_config"
     const val KEY_LANGUAGE = "language"
@@ -25,6 +54,9 @@ object AppConfig {
     const val KEY_TILE_DELAY = "tile_delay"
     const val KEY_VIBRATE = "vibrate"
     const val KEY_ASYNC_TRIGGER = "async_trigger"
+    const val KEY_TRIGGER_SERVICE = "trigger_service"
+    const val KEY_CORNER_GESTURE = "corner_gesture"
+    const val KEY_GESTURE_ACTION = "gesture_action"
 
     val DEFAULT_CONFIG = mapOf<String, Any>(
         KEY_LANGUAGE to Language.FollowSystem.ordinal,
@@ -32,5 +64,8 @@ object AppConfig {
         KEY_TILE_DELAY to 400L,
         KEY_VIBRATE to false,
         KEY_ASYNC_TRIGGER to false,
+        KEY_TRIGGER_SERVICE to TriggerService.VIS.ordinal,
+        KEY_CORNER_GESTURE to false,
+        KEY_GESTURE_ACTION to GestureAction.BuiltInLasso.ordinal,
     )
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">MiCTS</string>
+    <string name="app_name" translatable="false">ShizukuCTS</string>
     <string name="tile_label">Circle to Search</string>
     <string name="xposed_description">Trigger Circle to Search on any Android 9–16 device</string>
     <string name="title_activity_settings">Settings</string>
@@ -35,4 +35,27 @@
     <string name="spanish" translatable="false">Español</string>
     <string name="turkish" translatable="false">Türkçe</string>
     <string name="vietnamese" translatable="false">Việt Nam</string>
+    <string name="shizuku_settings">Shizuku</string>
+    <string name="shizuku_status_granted">Shizuku connected</string>
+    <string name="shizuku_status_permission">Shizuku permission required</string>
+    <string name="shizuku_status_not_running">Shizuku is not running</string>
+    <string name="shizuku_status_not_installed">Shizuku is not installed</string>
+    <string name="grant">Grant</string>
+    <string name="open">Open</string>
+    <string name="requires_shizuku">Requires Shizuku</string>
+    <string name="set_google_assistant">Set Google as default assistant</string>
+    <string name="set_google_assistant_summary">Needed by the VIS trigger service</string>
+    <string name="done">Done</string>
+    <string name="failed">Failed</string>
+    <string name="gesture_settings">Gesture</string>
+    <string name="corner_gesture">Corner swipe gesture</string>
+    <string name="corner_gesture_summary">Swipe diagonally inward from a bottom corner</string>
+    <string name="gesture_action">Gesture action</string>
+    <string name="gesture_action_lasso">Built-in lasso</string>
+    <string name="gesture_action_system">System Circle to Search</string>
+    <string name="overlay_permission_required">Allow \"Display over other apps\" to use the corner gesture</string>
+    <string name="gesture_notification_channel">Corner gesture</string>
+    <string name="gesture_notification_title">Corner swipe gesture is active</string>
+    <string name="cts_hint">Circle or draw a box to search</string>
+    <string name="lens_failed">Couldn\'t open Google Lens</string>
 </resources>
