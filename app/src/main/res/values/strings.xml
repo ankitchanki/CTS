@@ -65,4 +65,5 @@
     <string name="circlet_assistant_summary">The system corner swipe and long-press home open Circle to Search mode instead of Gemini</string>
     <string name="circlet_assistant_active">Active: system assistant gestures open Circle to Search mode</string>
     <string name="set">Set</string>
+    <string name="assist_no_screenshot">Circlet didn\'t get the screen. Turn on \"Use screenshot\" under Default digital assistant app, or grant Shizuku in Circlet.</string>
 </resources>

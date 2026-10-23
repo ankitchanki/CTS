@@ -27,7 +27,11 @@ Forked from [parallelcc/MiCTS](https://github.com/parallelcc/micts) (GPL-3.0). A
    - Or tap **Use Circlet as assistant** (or pick Circlet in *Default digital assistant app*). The system's own assistant gestures — corner swipe, long-press home, power button — then open Circlet's Circle to Search mode instead of Gemini. This works on any OEM, because it doesn't depend on launcher settings.
 
 ### Circlet as the default assistant
-Circlet declares an `ACTION_ASSIST` activity, the same way ChatGPT, Claude or Hail appear in the assistant list. When the system invokes the assistant, Circlet plays the invocation animation and opens its Circle to Search mode (frozen screen → lasso → Google Lens).
+Circlet ships a full `VoiceInteractionService`, plus an `ACTION_ASSIST` activity as a fallback. Some launchers, HyperOS included, invoke the assistant through `VoiceInteractionManagerService`, which only reaches apps with that service; an assist activity alone gets nothing there. When the system invokes Circlet, the session receives the system's own screenshot, so no Shizuku is needed on this path. It plays the invocation animation (glow, haptics, shimmer) in the session window and opens Circle to Search mode (frozen screen → lasso → Google Lens).
+
+Notes:
+- Keep **Use screenshot** on in *Default digital assistant app* settings. Otherwise Circlet falls back to a Shizuku screenshot.
+- Android also points the default voice recognizer at the assistant's recognition service. Circlet doesn't do speech recognition, so apps that use the system recognizer, rather than their own (Gboard has its own), may report that voice input isn't available while Circlet is the assistant.
 
 Limitation: while Google is not the default assistant, Google's own Circle to Search UI can't be opened without root. The `VIS` trigger would reach Circlet itself, not Google. So in this mode Circlet always uses its built-in lasso mode, unless `CSService` with root Shizuku is available.
 
