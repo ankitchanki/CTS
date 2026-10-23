@@ -55,6 +55,9 @@
     <string name="gesture_notification_title">Corner swipe gesture is active</string>
     <string name="block_assist_gesture">Stop Gemini on corner swipe</string>
     <string name="block_assist_gesture_summary">Turns off Android\'s \"swipe to invoke assistant\" setting while the corner gesture is on. Works with Pixel/AOSP launchers; HyperOS, One UI and others have their own setting, so turn that off in phone settings.</string>
+    <string name="corner_guide_title">Where to swipe</string>
+    <string name="corner_guide_body">Start just above the gesture line in the bottom-left or bottom-right corner, then swipe inward and up at about 45°. Starting on the gesture line itself goes to the system instead.</string>
+    <string name="corner_guide_show_me">Show me where</string>
     <string name="find_assist_settings">Find launcher assistant setting</string>
     <string name="find_assist_settings_summary">Read-only: lists settings that look like an assistant or corner gesture, to find your launcher\'s own key</string>
     <string name="find_assist_settings_none">No matching settings found.</string>

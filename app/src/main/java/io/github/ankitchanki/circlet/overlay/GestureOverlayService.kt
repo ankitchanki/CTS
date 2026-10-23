@@ -52,6 +52,7 @@ class GestureOverlayService : Service() {
             return START_NOT_STICKY
         }
         controller.attach()
+        if (intent?.action == ACTION_SHOW_HINT) controller.showHint()
         return START_STICKY
     }
 
@@ -109,6 +110,15 @@ class GestureOverlayService : Service() {
         private const val CHANNEL_ID = "corner_gesture"
         private const val NOTIFICATION_ID = 1
         private const val SYSTEM_TRIGGER_DELAY_MS = 120L
+        private const val ACTION_SHOW_HINT = "io.github.ankitchanki.circlet.action.SHOW_HINT"
+
+        /** Flashes the corner zones on screen so the user can see where to swipe. */
+        fun showHint(context: Context) {
+            if (!cornersEnabled(context) || !Settings.canDrawOverlays(context)) return
+            runCatching {
+                context.startForegroundService(Intent(context, GestureOverlayService::class.java).setAction(ACTION_SHOW_HINT))
+            }.onFailure { e -> Log.e(TAG, "showing corner hint failed", e) }
+        }
 
         private fun cornersEnabled(context: Context): Boolean =
             context.getSharedPreferences(AppConfig.CONFIG_NAME, MODE_PRIVATE)

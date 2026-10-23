@@ -44,6 +44,8 @@ Circle to Search must already work on your phone when you **tap the Circlet icon
 3. Turn on **Corner swipe gesture**. *Display over other apps* is granted through Shizuku, or Android asks you.
 4. Keep **Stop Gemini on corner swipe** on.
 5. Start the swipe **just above** the navigation bar in a bottom corner and move inward at about 45°.
+   Not sure where? Circlet settings shows a diagram under *Corner swipe gesture*, and **Show me where** makes the two zones glow on screen with an arrow. They also glow once when you turn the gesture on.
+6. Want a one-tap trigger too? Add the Circlet Quick Settings tile, or on Xiaomi/POCO add Circlet to **Quick ball** (*Settings → Additional settings → Quick ball*). Both open Circle to Search instantly.
 
 ![Corner zones sit above the navigation bar](docs/images/ui/01-corner-zones.png)
 

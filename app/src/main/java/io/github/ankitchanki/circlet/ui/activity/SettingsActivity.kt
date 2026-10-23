@@ -10,6 +10,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -401,6 +414,10 @@ fun SettingsPage(
             }
         )
 
+        if (appConfig[AppConfig.KEY_CORNER_GESTURE] as Boolean && canDrawOverlays) {
+            CornerGestureGuide(onShowMe = { viewModel.showCornerHint() })
+        }
+
         ListItem(
             leadingContent = { Icon(painterResource(R.drawable.ic_assistant), contentDescription = null) },
             headlineContent = { Text(stringResource(R.string.block_assist_gesture)) },
@@ -511,3 +528,71 @@ fun SliderSettingItem(
         )
     }
 }
+
+/** Explains where the invisible corner zones are, with a diagram and a button that flashes them on screen. */
+@Composable
+fun CornerGestureGuide(onShowMe: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CornerGestureDiagram(Modifier.size(width = 78.dp, height = 140.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.corner_guide_title), style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    stringResource(R.string.corner_guide_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(8.dp))
+                FilledTonalButton(onClick = onShowMe) {
+                    Text(stringResource(R.string.corner_guide_show_me))
+                }
+            }
+        }
+    }
+}
+
+/** Mini phone: gesture line at the bottom, the two corner zones just above it, arrows inward and up. */
+@Composable
+fun CornerGestureDiagram(modifier: Modifier) {
+    val outline = MaterialTheme.colorScheme.outline
+    val handle = MaterialTheme.colorScheme.onSurfaceVariant
+    val zone = MaterialTheme.colorScheme.primary
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val stroke = 2.dp.toPx()
+        drawRoundRect(outline, cornerRadius = CornerRadius(14.dp.toPx()), style = Stroke(stroke))
+        // Gesture line, then the strip the system owns.
+        val handleY = h - 7.dp.toPx()
+        drawLine(handle, Offset(w * 0.35f, handleY), Offset(w * 0.65f, handleY), strokeWidth = 3.dp.toPx(), cap = StrokeCap.Round)
+        val zoneSize = 16.dp.toPx()
+        val zoneBottom = h - 14.dp.toPx()
+        val inset = 4.dp.toPx()
+        listOf(true, false).forEach { left ->
+            val x = if (left) inset else w - inset - zoneSize
+            drawRoundRect(zone.copy(alpha = 0.25f), Offset(x, zoneBottom - zoneSize), Size(zoneSize, zoneSize), CornerRadius(4.dp.toPx()))
+            drawRoundRect(zone, Offset(x, zoneBottom - zoneSize), Size(zoneSize, zoneSize), CornerRadius(4.dp.toPx()), style = Stroke(1.5.dp.toPx()))
+            // Arrow from the zone towards the centre, about 45 degrees.
+            val start = Offset(x + zoneSize / 2, zoneBottom - zoneSize / 2)
+            val len = w * 0.34f
+            val end = Offset(start.x + if (left) len else -len, start.y - len)
+            val head = 7.dp.toPx()
+            val path = Path().apply {
+                moveTo(start.x, start.y); lineTo(end.x, end.y)
+                moveTo(end.x, end.y); lineTo(end.x + if (left) -head else head, end.y)
+                moveTo(end.x, end.y); lineTo(end.x, end.y + head)
+            }
+            drawPath(path, zone, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        }
+    }
+}
+

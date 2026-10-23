@@ -17,6 +17,7 @@ import io.github.ankitchanki.circlet.shizuku.AssistGestureBlocker
 import io.github.ankitchanki.circlet.shizuku.ShizukuManager
 import io.github.ankitchanki.circlet.shizuku.ShizukuStatus
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -93,14 +94,25 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     fun setCornerGesture(enabled: Boolean, openOverlaySettings: () -> Unit) {
         updateAppConfig(AppConfig.KEY_CORNER_GESTURE, enabled)
-        if (!enabled || _canDrawOverlays.value) return
+        if (!enabled) return
         viewModelScope.launch {
-            if (ShizukuManager.isGranted && ShizukuManager.grantOverlayPermission()) {
-                refreshPermissions()
-            } else {
-                openOverlaySettings()
+            if (!_canDrawOverlays.value) {
+                if (ShizukuManager.isGranted && ShizukuManager.grantOverlayPermission()) {
+                    refreshPermissions()
+                } else {
+                    openOverlaySettings()
+                    return@launch
+                }
             }
+            // Show where the zones are right away, once the service has put them on screen.
+            delay(HINT_AFTER_ENABLE_MS)
+            showCornerHint()
         }
+    }
+
+    /** Flashes the corner zones on screen. */
+    fun showCornerHint() {
+        GestureOverlayService.showHint(getApplication())
     }
 
     /** Lines found by the assistant-gesture settings search; null while no report is shown. */
@@ -124,4 +136,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    companion object {
+        private const val HINT_AFTER_ENABLE_MS = 900L
+    }
 }

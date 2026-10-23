@@ -55,7 +55,7 @@ class CornerGestureController(
     )
 
     private val haptics = GestureHaptics(context)
-    private val cornerViews = mutableListOf<View>()
+    private val cornerViews = mutableListOf<CornerTouchView>()
     private var effectsView: EffectsView? = null
     private var capture: Deferred<Bitmap?>? = null
     private var revealJob: Job? = null
@@ -70,10 +70,30 @@ class CornerGestureController(
         bottomInset = OverlayWindows.bottomSystemInset(context)
         val size = dp(ZONE_SIZE_DP).toInt()
         for (gravity in intArrayOf(Gravity.START, Gravity.END)) {
-            val view = CornerTouchView(context, ::onCornerTouch).apply { tag = gravity }
+            val view = CornerTouchView(context, leftCorner = gravity == Gravity.START, onTouch = ::onCornerTouch).apply { tag = gravity }
             runCatching { windowManager.addView(view, OverlayWindows.cornerZone(size, gravity, bottomInset)) }
                 .onSuccess { cornerViews += view }
                 .onFailure { e -> Log.e(TAG, "adding corner window failed", e) }
+        }
+    }
+
+    private var hintAnimator: ValueAnimator? = null
+
+    /** Makes the zones glow with an arrow for a few seconds so people can see where to swipe. */
+    fun showHint() {
+        if (cornerViews.isEmpty()) return
+        hintAnimator?.cancel()
+        hintAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = HINT_DURATION_MS
+            addUpdateListener { anim ->
+                val t = anim.animatedFraction
+                // Three pulses, fading out over the last third.
+                val pulse = 0.55f + 0.45f * sin(2 * PI * HINT_PULSES * t - PI / 2).toFloat()
+                val fade = (3f * (1f - t)).coerceIn(0f, 1f)
+                cornerViews.forEach { it.hintAlpha = pulse * fade }
+            }
+            addListener(onEnd { cornerViews.forEach { it.hintAlpha = 0f } })
+            start()
         }
     }
 
@@ -91,6 +111,7 @@ class CornerGestureController(
 
     fun detach() {
         animator?.cancel()
+        hintAnimator?.cancel()
         cornerViews.forEach { runCatching { windowManager.removeView(it) } }
         cornerViews.clear()
         discardCapture()
@@ -262,5 +283,7 @@ class CornerGestureController(
         private const val REVEAL_DELAY_MS = 200L
         private const val CAPTURE_TIMEOUT_MS = 1500L
         private const val RETRACT_DURATION_MS = 220L
+        private const val HINT_DURATION_MS = 4200L
+        private const val HINT_PULSES = 3
     }
 }
