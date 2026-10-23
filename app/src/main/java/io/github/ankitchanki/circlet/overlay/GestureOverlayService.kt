@@ -27,7 +27,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-/** Foreground service that keeps the bottom-corner gesture zones on screen. */
+/**
+ * Foreground service that keeps the bottom-corner gesture zones on screen, and plays the
+ * invocation when Circlet is opened as the default assistant ([ACTION_INVOKE]).
+ */
 class GestureOverlayService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var controller: CornerGestureController
@@ -39,12 +42,19 @@ class GestureOverlayService : Service() {
         super.onCreate()
         startForegroundCompat()
         controller = CornerGestureController(this, scope, ::onInvoked)
-        controller.attach()
         // Keep the system assistant corner swipe (Gemini) from taking our gesture.
         scope.launch { AssistGestureBlocker.sync(this@GestureOverlayService) }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (cornersEnabled(this)) controller.attach()
+        if (intent?.action == ACTION_INVOKE && session == null) {
+            controller.invoke()
+        } else if (!cornersEnabled(this) && session == null) {
+            stopSelf()
+        }
+        return if (cornersEnabled(this)) START_STICKY else START_NOT_STICKY
+    }
 
     override fun onDestroy() {
         session?.close()
@@ -58,7 +68,8 @@ class GestureOverlayService : Service() {
         val action = GestureAction.entries.getOrNull(
             prefs.getInt(AppConfig.KEY_GESTURE_ACTION, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_GESTURE_ACTION] as Int)
         )
-        if (action == GestureAction.BuiltInLasso) {
+        // While Circlet is the default assistant, VIS reaches Circlet itself, not Google.
+        if (action == GestureAction.BuiltInLasso || !CircleToSearchTrigger.canReachGoogle(this)) {
             release()
             if (frame == null) {
                 // No screenshot (Shizuku missing or capture failed). Don't fall back to the
@@ -66,7 +77,10 @@ class GestureOverlayService : Service() {
                 Toast.makeText(this, R.string.lasso_needs_shizuku, Toast.LENGTH_LONG).show()
                 return
             }
-            val newSession = CircleToSearchSession(this, scope, frame) { session = null }
+            val newSession = CircleToSearchSession(this, scope, frame) {
+                session = null
+                stopIfIdle()
+            }
             session = newSession
             newSession.show()
             return
@@ -80,7 +94,13 @@ class GestureOverlayService : Service() {
             if (!CircleToSearchTrigger.trigger(this@GestureOverlayService, ENTRY_POINT, vibrate)) {
                 Toast.makeText(this@GestureOverlayService, R.string.trigger_failed, Toast.LENGTH_SHORT).show()
             }
+            stopIfIdle()
         }
+    }
+
+    /** Started only for an assistant invocation: go away once it is over. */
+    private fun stopIfIdle() {
+        if (!cornersEnabled(this) && session == null) stopSelf()
     }
 
     private fun startForegroundCompat() {
@@ -109,11 +129,18 @@ class GestureOverlayService : Service() {
         private const val CHANNEL_ID = "corner_gesture"
         private const val NOTIFICATION_ID = 1
         private const val ENTRY_POINT = 1
+        private const val ACTION_INVOKE = "io.github.ankitchanki.circlet.action.INVOKE"
+
+        fun invokeIntent(context: Context): Intent =
+            Intent(context, GestureOverlayService::class.java).setAction(ACTION_INVOKE)
+
+        private fun cornersEnabled(context: Context): Boolean =
+            context.getSharedPreferences(AppConfig.CONFIG_NAME, MODE_PRIVATE)
+                .getBoolean(AppConfig.KEY_CORNER_GESTURE, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_CORNER_GESTURE] as Boolean)
 
         /** Starts or stops the service to match the saved setting and the overlay permission. */
         fun sync(context: Context) {
-            val prefs = context.getSharedPreferences(AppConfig.CONFIG_NAME, MODE_PRIVATE)
-            val enabled = prefs.getBoolean(AppConfig.KEY_CORNER_GESTURE, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_CORNER_GESTURE] as Boolean)
+            val enabled = cornersEnabled(context)
             val intent = Intent(context, GestureOverlayService::class.java)
             if (enabled && Settings.canDrawOverlays(context)) {
                 runCatching { context.startForegroundService(intent) }

@@ -32,6 +32,8 @@ data class GestureVisuals(
     /** 0..1 stroke thickness of the crescent relative to its maximum. */
     val beamThickness: Float,
     val beamAlpha: Float,
+    /** 0..1 strength of the rotating edge glow around the whole screen. */
+    val glow: Float,
 )
 
 object GestureVisualsModel {
@@ -54,6 +56,7 @@ object GestureVisualsModel {
             beamReach = lerp(0.15f, 1f, eased),
             beamThickness = lerp(0.2f, 1f, p),
             beamAlpha = Easing.smoothstep(0.05f, 0.4f, p),
+            glow = Easing.smoothstep(0f, 0.85f, p),
         )
     }
 }

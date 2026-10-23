@@ -48,6 +48,12 @@ class EffectsView(context: Context, private val corner: Corner) : View(context) 
     var scaleOverride: Float? = null
         set(value) { field = value; invalidate() }
 
+    /** 0..1 extra swell of the edge glow, used for the activation pulse. */
+    var glowBoost: Float = 0f
+        set(value) { field = value; invalidate() }
+
+    private val edgeGlow = EdgeGlowRenderer(this)
+
     private val maxCardRadius = dp(32f)
     private val maxBeamReach = dp(200f)
     private val maxBeamStroke = dp(40f)
@@ -81,6 +87,7 @@ class EffectsView(context: Context, private val corner: Corner) : View(context) 
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         beamShader = createBeamShader(h.toFloat())
+        edgeGlow.onSizeChanged(w, h)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -90,6 +97,7 @@ class EffectsView(context: Context, private val corner: Corner) : View(context) 
         } else {
             shimmer?.let { drawShimmer(canvas, it) }
         }
+        edgeGlow.draw(canvas, visuals.glow, glowBoost)
         // Beam and handle are authored for the bottom-left corner and mirrored for bottom-right.
         val save = canvas.save()
         if (corner == Corner.BottomRight) canvas.scale(-1f, 1f, width / 2f, 0f)

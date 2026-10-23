@@ -45,6 +45,21 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
+        <!-- Makes Circlet selectable as "Default digital assistant app": the system's assistant
+             gestures (corner swipe, long-press home) then open Circlet instead of Gemini. -->
+        <activity
+            android:name=".ui.activity.AssistActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".LaunchTileService"
             android:exported="true"

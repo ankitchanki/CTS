@@ -35,6 +35,7 @@ approximate it with 90 interpolated arc segments.
 | --- | --- | --- |
 | `corner-handle.svg` | Resting corner indicator lines | `EffectsView.drawHandle` |
 | `corner-beam.svg` | Multi-colour crescent at full progress | `EffectsView.drawBeam` |
+| `edge-glow.svg` | Rotating rainbow glow around the screen edges during the swipe and in Circle to Search mode | `EdgeGlowRenderer` |
 | `recessed-card.svg` | App frame scaled to 0.96 in a rounded card over the scrim | `EffectsView.drawRecessedCard` |
 | `shimmer.svg` | White wave when the viewport locks | `EffectsView.drawShimmer` |
 | `lasso-stroke.svg` | Lasso being drawn | `SelectionOverlayView` |

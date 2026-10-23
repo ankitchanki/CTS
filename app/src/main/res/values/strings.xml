@@ -61,4 +61,8 @@
     <string name="block_assist_gesture">Stop Gemini on corner swipe</string>
     <string name="block_assist_gesture_summary">Turns off the system \"swipe to invoke assistant\" gesture while the corner gesture is on, so the swipe opens Circle to Search instead of Gemini</string>
     <string name="lasso_needs_shizuku">Circle to Search mode needs Shizuku to capture the screen. Open Circlet and grant Shizuku.</string>
+    <string name="circlet_assistant">Use Circlet as assistant</string>
+    <string name="circlet_assistant_summary">The system corner swipe and long-press home open Circle to Search mode instead of Gemini</string>
+    <string name="circlet_assistant_active">Active: system assistant gestures open Circle to Search mode</string>
+    <string name="set">Set</string>
 </resources>

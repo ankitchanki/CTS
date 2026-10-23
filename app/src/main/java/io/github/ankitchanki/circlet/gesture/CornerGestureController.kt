@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -25,6 +24,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
+import kotlin.math.PI
+import kotlin.math.sin
 
 /**
  * Glue between input, gesture math and the drawing layers:
@@ -53,6 +54,7 @@ class CornerGestureController(
         )
     )
 
+    private val haptics = GestureHaptics(context)
     private val cornerViews = mutableListOf<View>()
     private var effectsView: EffectsView? = null
     private var capture: Deferred<Bitmap?>? = null
@@ -99,7 +101,30 @@ class CornerGestureController(
         return true
     }
 
+    /**
+     * Plays the whole invocation without a swipe (progress animates to 1 on its own), e.g. when
+     * Circlet is launched as the default assistant by the system's own gesture.
+     */
+    fun invoke(corner: Corner = Corner.BottomRight) {
+        if (busy || effectsView != null) return
+        busy = true
+        startGesture(corner)
+        val view = effectsView ?: run {
+            busy = false
+            return
+        }
+        scope.launch {
+            animate(AUTO_PROGRESS_MS) { t ->
+                val p = Easing.easeInOutCubic(t)
+                view.visuals = GestureVisualsModel.forProgress(p)
+                haptics.onProgress(p)
+            }
+            onActivated()
+        }
+    }
+
     private fun startGesture(corner: Corner) {
+        haptics.reset()
         val view = EffectsView(context, corner).apply { visibility = View.INVISIBLE }
         runCatching { windowManager.addView(view, OverlayWindows.effects()) }
             .onFailure { e ->
@@ -127,7 +152,10 @@ class CornerGestureController(
 
     private fun onState(state: GestureState) {
         when (state.phase) {
-            GesturePhase.Tracking -> effectsView?.visuals = GestureVisualsModel.forProgress(state.progress)
+            GesturePhase.Tracking -> {
+                effectsView?.visuals = GestureVisualsModel.forProgress(state.progress)
+                haptics.onProgress(state.progress)
+            }
             GesturePhase.Activated -> onActivated()
             GesturePhase.Cancelled -> retract(state.progress)
             GesturePhase.Idle -> Unit
@@ -163,7 +191,7 @@ class CornerGestureController(
         busy = true
         val view = effectsView ?: return finishGesture()
         view.visuals = GestureVisualsModel.forProgress(1f)
-        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        haptics.activate()
         scope.launch {
             val job = capture
             val frame = job?.let { withTimeoutOrNull(CAPTURE_TIMEOUT_MS) { it.await() } }
@@ -173,8 +201,13 @@ class CornerGestureController(
             view.visibility = View.VISIBLE
             view.frame = frame
 
-            animate(ShimmerModel.DURATION_MS) { t -> view.shimmer = ShimmerModel.frame(t) }
+            // Shimmer sweeps while the edge glow swells and settles: the "viewport locked" moment.
+            animate(ShimmerModel.DURATION_MS) { t ->
+                view.shimmer = ShimmerModel.frame(t)
+                view.glowBoost = sin(PI * t).toFloat()
+            }
             view.shimmer = null
+            view.glowBoost = 0f
             animate(ShimmerModel.SETTLE_DURATION_MS) { t ->
                 view.scaleOverride = lerp(GestureVisualsModel.MIN_WINDOW_SCALE, 1f, Easing.easeOutCubic(t))
             }
@@ -235,5 +268,6 @@ class CornerGestureController(
         private const val REVEAL_DELAY_MS = 200L
         private const val CAPTURE_TIMEOUT_MS = 1500L
         private const val RETRACT_DURATION_MS = 220L
+        private const val AUTO_PROGRESS_MS = 420L
     }
 }

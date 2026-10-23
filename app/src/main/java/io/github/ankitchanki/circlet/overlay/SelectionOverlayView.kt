@@ -64,6 +64,8 @@ class SelectionOverlayView(
     }
     private val hintRect = RectF()
 
+    private val edgeGlow = EdgeGlowRenderer(this)
+
     private val minSelectionSize = dp(24f)
     private val selectionPadding = dp(8f)
     private val selectionRadius = dp(20f)
@@ -81,6 +83,7 @@ class SelectionOverlayView(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         val gradient = LinearGradient(0f, 0f, w.toFloat(), h.toFloat(), PixelPalette.BEAM, null, Shader.TileMode.CLAMP)
         strokeGlowPaint.shader = gradient
+        edgeGlow.onSizeChanged(w, h)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -106,6 +109,8 @@ class SelectionOverlayView(
             canvas.drawRoundRect(selectionRect, selectionRadius, selectionRadius, strokeGlowPaint)
             canvas.drawRoundRect(selectionRect, selectionRadius, selectionRadius, strokePaint)
         }
+        // Softer than during the swipe: signals "Circle to Search is listening".
+        edgeGlow.draw(canvas, if (sel == null) LISTENING_GLOW else SELECTED_GLOW)
     }
 
     private fun drawHint(canvas: Canvas) {
@@ -179,4 +184,9 @@ class SelectionOverlayView(
 
     private fun dp(value: Float) =
         TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, resources.displayMetrics)
+
+    companion object {
+        private const val LISTENING_GLOW = 0.55f
+        private const val SELECTED_GLOW = 0.3f
+    }
 }

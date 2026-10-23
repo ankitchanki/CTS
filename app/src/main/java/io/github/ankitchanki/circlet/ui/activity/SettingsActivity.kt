@@ -264,6 +264,7 @@ fun SettingsPage(
         val assistantResult by viewModel.assistantResult.collectAsState()
         val shizukuGranted = shizukuStatus == ShizukuStatus.Granted
         val shizukuIsRoot by viewModel.shizukuIsRoot.collectAsState()
+        val circletIsAssistant by viewModel.circletIsAssistant.collectAsState()
         val context = LocalContext.current
 
         SectionHeader(stringResource(R.string.shizuku_settings))
@@ -341,6 +342,22 @@ fun SettingsPage(
                             )
                         }
                     }
+                }
+            }
+        )
+
+        ListItem(
+            leadingContent = { Icon(painterResource(R.drawable.ic_tile_service), contentDescription = null) },
+            headlineContent = { Text(stringResource(R.string.circlet_assistant)) },
+            supportingContent = {
+                Text(stringResource(if (circletIsAssistant) R.string.circlet_assistant_active else R.string.circlet_assistant_summary))
+            },
+            trailingContent = {
+                TextButton(
+                    enabled = !circletIsAssistant,
+                    onClick = { viewModel.setCircletAsAssistant { context.startActivity(it) } }
+                ) {
+                    Text(stringResource(R.string.set))
                 }
             }
         )

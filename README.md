@@ -24,6 +24,12 @@ Forked from [parallelcc/MiCTS](https://github.com/parallelcc/micts) (GPL-3.0). A
 3. Trigger it:
    - Launch the app, use the Quick Settings tile, or point any automation app (Quick Ball, ShortX, Routines+…) at it.
    - Or turn on **Corner swipe gesture** and swipe diagonally inward from the bottom-left or bottom-right corner.
+   - Or tap **Use Circlet as assistant** (or pick Circlet in *Default digital assistant app*). The system's own assistant gestures — corner swipe, long-press home, power button — then open Circlet's Circle to Search mode instead of Gemini. This works on any OEM, because it doesn't depend on launcher settings.
+
+### Circlet as the default assistant
+Circlet declares an `ACTION_ASSIST` activity, the same way ChatGPT, Claude or Hail appear in the assistant list. When the system invokes the assistant, Circlet plays the invocation animation and opens its Circle to Search mode (frozen screen → lasso → Google Lens).
+
+Limitation: while Google is not the default assistant, Google's own Circle to Search UI can't be opened without root. The `VIS` trigger would reach Circlet itself, not Google. So in this mode Circlet always uses its built-in lasso mode, unless `CSService` with root Shizuku is available.
 
 ### Settings
 - **System trigger service**
@@ -44,12 +50,19 @@ gesture/CornerVectorMath.kt      pure vector math: corner zones, 45° inward dir
 gesture/CornerGestureTracker.kt  pure state machine: Idle → Tracking → Activated / Cancelled
 gesture/GestureVisuals.kt        pure mapping progress/time → scale 1.0→0.96, corner radius, beam, shimmer
 gesture/SelectionGeometry.kt     pure lasso → bounding box → bitmap pixels
+gesture/HapticSteps.kt           pure rising-detent logic for haptics
+gesture/GestureHaptics           vibration primitives / fallbacks
+overlay/EdgeGlowRenderer         rotating edge glow
 gesture/CornerGestureController  glue: MotionEvents → tracker → visuals → views, capture, hand-off
 overlay/CornerTouchView          40dp × 40dp touch zones in each bottom corner
 overlay/EffectsView              recessed card, corner handle → Pixel-colour crescent, white shimmer
 overlay/SelectionOverlayView     frozen frame + lasso drawing (Circle to Search mode)
 overlay/ScreenCapture            screencap through the Shizuku shell service
 ```
+
+Feel:
+- **Haptics:** 12 rising detents while you swipe, each stronger than the last (haptic primitives where supported, predefined ticks otherwise), then a crisp double-tap confirm on activation.
+- **Edge glow:** a rotating, breathing rainbow glow hugs the screen edges as progress grows, swells during the shimmer, and stays softly on while Circle to Search mode is open.
 
 Lifecycle:
 1. A touch must start inside a 40dp square in a bottom corner. Movement must stay within ±30° of the 45° inward/upward diagonal. Progress is the finger's extra distance from the corner divided by 140dp, which is linear.
