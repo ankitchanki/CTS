@@ -53,6 +53,20 @@ android {
         buildConfig = true
         compose = true
     }
+
+    // Same app id and signing key, so either edition installs over the other.
+    flavorDimensions += "edition"
+    productFlavors {
+        create("full") {
+            dimension = "edition"
+            buildConfigField("boolean", "SHIZUKU", "true")
+        }
+        create("lite") {
+            dimension = "edition"
+            versionNameSuffix = "-lite"
+            buildConfigField("boolean", "SHIZUKU", "false")
+        }
+    }
 }
 
 androidComponents {
@@ -60,10 +74,11 @@ androidComponents {
         variant.outputs.forEach { output ->
             require(output is VariantOutputImpl)
 
-            val vName = output.versionName.get()
             val vCode = output.versionCode.get()
 
-            output.outputFileName.set("Circlet_${vName}_${vCode}_${variant.name}.apk")
+            val edition = variant.flavorName.orEmpty().replaceFirstChar { it.uppercase() }
+            val suffix = if (variant.buildType == "release") "" else "_${variant.buildType}"
+            output.outputFileName.set("Circlet-${edition}_${latestTag}_${vCode}$suffix.apk")
         }
     }
 }
@@ -86,8 +101,8 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.accompanist.drawablepainter)
-    implementation(libs.shizuku.api)
-    implementation(libs.shizuku.provider)
+    "fullImplementation"(libs.shizuku.api)
+    "fullImplementation"(libs.shizuku.provider)
     implementation(libs.hiddenapibypass)
     testImplementation(libs.junit)
 }

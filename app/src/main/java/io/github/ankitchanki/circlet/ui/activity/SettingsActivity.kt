@@ -283,103 +283,106 @@ fun SettingsPage(
         val shizukuIsRoot by viewModel.shizukuIsRoot.collectAsState()
         val context = LocalContext.current
 
-        SectionHeader(stringResource(R.string.shizuku_settings))
+        // Full edition only: everything here needs Shizuku.
+        if (BuildConfig.SHIZUKU) {
+            SectionHeader(stringResource(R.string.shizuku_settings))
 
-        ListItem(
-            leadingContent = {
-                Icon(
-                    painter = painterResource(R.drawable.ic_shizuku),
-                    contentDescription = null,
-                    tint = if (shizukuGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
-            },
-            headlineContent = {
-                Text(
-                    stringResource(
-                        when (shizukuStatus) {
-                            ShizukuStatus.Granted -> R.string.shizuku_status_granted
-                            ShizukuStatus.PermissionRequired -> R.string.shizuku_status_permission
-                            ShizukuStatus.NotRunning -> R.string.shizuku_status_not_running
-                            ShizukuStatus.NotInstalled -> R.string.shizuku_status_not_installed
+            ListItem(
+                leadingContent = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_shizuku),
+                        contentDescription = null,
+                        tint = if (shizukuGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    )
+                },
+                headlineContent = {
+                    Text(
+                        stringResource(
+                            when (shizukuStatus) {
+                                ShizukuStatus.Granted -> R.string.shizuku_status_granted
+                                ShizukuStatus.PermissionRequired -> R.string.shizuku_status_permission
+                                ShizukuStatus.NotRunning -> R.string.shizuku_status_not_running
+                                ShizukuStatus.NotInstalled -> R.string.shizuku_status_not_installed
+                            }
+                        )
+                    )
+                },
+                trailingContent = {
+                    when (shizukuStatus) {
+                        ShizukuStatus.PermissionRequired -> TextButton(onClick = { ShizukuManager.requestPermission() }) {
+                            Text(stringResource(R.string.grant))
+                        }
+                        ShizukuStatus.NotRunning -> TextButton(onClick = { ShizukuManager.openShizukuApp(context) }) {
+                            Text(stringResource(R.string.open))
+                        }
+                        ShizukuStatus.NotInstalled -> TextButton(onClick = {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/"))
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        }) {
+                            Text(stringResource(R.string.open))
+                        }
+                        ShizukuStatus.Granted -> Unit
+                    }
+                }
+            )
+
+            ListItem(
+                leadingContent = { Icon(painterResource(R.drawable.ic_trigger_service), contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.system_trigger_service)) },
+                trailingContent = {
+                    Box {
+                        var triggerServiceExpanded by remember { viewModel.triggerServiceExpanded }
+                        val selectedOption = TriggerService.entries[appConfig[AppConfig.KEY_TRIGGER_SERVICE] as Int].let {
+                            if (it.needsShizukuRoot && !shizukuIsRoot) "${it.name} → ${TriggerService.VIS.name}" else it.name
+                        }
+                        val options = TriggerService.getSupportedServices()
+
+                        TextButton(onClick = { triggerServiceExpanded = true }) {
+                            Text(text = selectedOption)
+                        }
+
+                        if (options.size <= 1) return@Box
+
+                        DropdownMenu(
+                            expanded = triggerServiceExpanded,
+                            onDismissRequest = { triggerServiceExpanded = false }
+                        ) {
+                            options.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option.name) },
+                                    enabled = !option.needsShizukuRoot || shizukuIsRoot,
+                                    onClick = {
+                                        triggerServiceExpanded = false
+                                        viewModel.updateAppConfig(AppConfig.KEY_TRIGGER_SERVICE, option.ordinal)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            )
+
+            ListItem(
+                leadingContent = { Icon(painterResource(R.drawable.ic_assistant), contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.set_google_assistant)) },
+                supportingContent = {
+                    Text(
+                        when (assistantResult) {
+                            true -> stringResource(R.string.done)
+                            false -> stringResource(R.string.failed)
+                            null -> stringResource(if (shizukuGranted) R.string.set_google_assistant_summary else R.string.requires_shizuku)
                         }
                     )
-                )
-            },
-            trailingContent = {
-                when (shizukuStatus) {
-                    ShizukuStatus.PermissionRequired -> TextButton(onClick = { ShizukuManager.requestPermission() }) {
+                },
+                trailingContent = {
+                    TextButton(enabled = shizukuGranted, onClick = { viewModel.setGoogleAsAssistant() }) {
                         Text(stringResource(R.string.grant))
                     }
-                    ShizukuStatus.NotRunning -> TextButton(onClick = { ShizukuManager.openShizukuApp(context) }) {
-                        Text(stringResource(R.string.open))
-                    }
-                    ShizukuStatus.NotInstalled -> TextButton(onClick = {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/"))
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        )
-                    }) {
-                        Text(stringResource(R.string.open))
-                    }
-                    ShizukuStatus.Granted -> Unit
                 }
-            }
-        )
-
-        ListItem(
-            leadingContent = { Icon(painterResource(R.drawable.ic_trigger_service), contentDescription = null) },
-            headlineContent = { Text(stringResource(R.string.system_trigger_service)) },
-            trailingContent = {
-                Box {
-                    var triggerServiceExpanded by remember { viewModel.triggerServiceExpanded }
-                    val selectedOption = TriggerService.entries[appConfig[AppConfig.KEY_TRIGGER_SERVICE] as Int].let {
-                        if (it.needsShizukuRoot && !shizukuIsRoot) "${it.name} → ${TriggerService.VIS.name}" else it.name
-                    }
-                    val options = TriggerService.getSupportedServices()
-
-                    TextButton(onClick = { triggerServiceExpanded = true }) {
-                        Text(text = selectedOption)
-                    }
-
-                    if (options.size <= 1) return@Box
-
-                    DropdownMenu(
-                        expanded = triggerServiceExpanded,
-                        onDismissRequest = { triggerServiceExpanded = false }
-                    ) {
-                        options.forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(option.name) },
-                                enabled = !option.needsShizukuRoot || shizukuIsRoot,
-                                onClick = {
-                                    triggerServiceExpanded = false
-                                    viewModel.updateAppConfig(AppConfig.KEY_TRIGGER_SERVICE, option.ordinal)
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        )
-
-        ListItem(
-            leadingContent = { Icon(painterResource(R.drawable.ic_assistant), contentDescription = null) },
-            headlineContent = { Text(stringResource(R.string.set_google_assistant)) },
-            supportingContent = {
-                Text(
-                    when (assistantResult) {
-                        true -> stringResource(R.string.done)
-                        false -> stringResource(R.string.failed)
-                        null -> stringResource(if (shizukuGranted) R.string.set_google_assistant_summary else R.string.requires_shizuku)
-                    }
-                )
-            },
-            trailingContent = {
-                TextButton(enabled = shizukuGranted, onClick = { viewModel.setGoogleAsAssistant() }) {
-                    Text(stringResource(R.string.grant))
-                }
-            }
-        )
+            )
+        }
 
         SectionHeader(stringResource(R.string.gesture_settings))
 
@@ -418,32 +421,36 @@ fun SettingsPage(
             CornerGestureGuide(onShowMe = { viewModel.showCornerHint() })
         }
 
-        ListItem(
-            leadingContent = { Icon(painterResource(R.drawable.ic_assistant), contentDescription = null) },
-            headlineContent = { Text(stringResource(R.string.block_assist_gesture)) },
-            supportingContent = {
-                Text(stringResource(if (shizukuGranted) R.string.block_assist_gesture_summary else R.string.requires_shizuku))
-            },
-            trailingContent = {
-                Switch(
-                    enabled = shizukuGranted,
-                    checked = appConfig[AppConfig.KEY_BLOCK_ASSIST_GESTURE] as Boolean,
-                    onCheckedChange = { viewModel.updateAppConfig(AppConfig.KEY_BLOCK_ASSIST_GESTURE, it) }
-                )
-            }
-        )
-
-        ListItem(
-            headlineContent = { Text(stringResource(R.string.find_assist_settings)) },
-            supportingContent = {
-                Text(stringResource(if (shizukuGranted) R.string.find_assist_settings_summary else R.string.requires_shizuku))
-            },
-            trailingContent = {
-                TextButton(enabled = shizukuGranted, onClick = { viewModel.findAssistGestureSettings() }) {
-                    Text(stringResource(R.string.find))
+        // Full edition only.
+        if (BuildConfig.SHIZUKU) {
+            ListItem(
+                leadingContent = { Icon(painterResource(R.drawable.ic_assistant), contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.block_assist_gesture)) },
+                supportingContent = {
+                    Text(stringResource(if (shizukuGranted) R.string.block_assist_gesture_summary else R.string.requires_shizuku))
+                },
+                trailingContent = {
+                    Switch(
+                        enabled = shizukuGranted,
+                        checked = appConfig[AppConfig.KEY_BLOCK_ASSIST_GESTURE] as Boolean,
+                        onCheckedChange = { viewModel.updateAppConfig(AppConfig.KEY_BLOCK_ASSIST_GESTURE, it) }
+                    )
                 }
-            }
-        )
+            )
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.find_assist_settings)) },
+                supportingContent = {
+                    Text(stringResource(if (shizukuGranted) R.string.find_assist_settings_summary else R.string.requires_shizuku))
+                },
+                trailingContent = {
+                    TextButton(enabled = shizukuGranted, onClick = { viewModel.findAssistGestureSettings() }) {
+                        Text(stringResource(R.string.find))
+                    }
+                }
+            )
+        }
+
     }
 
     val report by viewModel.assistSettingsReport.collectAsState()

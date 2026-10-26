@@ -18,13 +18,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import rikka.shizuku.Shizuku
 
-enum class ShizukuStatus {
-    NotInstalled,
-    NotRunning,
-    PermissionRequired,
-    Granted,
-}
-
 /**
  * Single entry point to Shizuku: tracks binder/permission state and owns the
  * [ShellService] user service connection.

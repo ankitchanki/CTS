@@ -60,12 +60,12 @@ jobs:
           echo 'org.gradle.parallel=true' >> ~/.gradle/gradle.properties
           echo 'org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8 -XX:+UseParallelGC' >> ~/.gradle/gradle.properties
 
-          ./gradlew :app:testDebugUnitTest
+          ./gradlew :app:testFullDebugUnitTest
 
-      - name: Build Release
+      - name: Build Release (Full + Lite)
         run: |
-          ./gradlew :app:assembleRelease ${RELEASE_TAG:+-PreleaseVersion=${RELEASE_TAG#v}}
-          echo "APK_PATH=$(find app/build/outputs/apk/release -name '*.apk')" >> $GITHUB_ENV
+          ./gradlew :app:assembleFullRelease :app:assembleLiteRelease ${RELEASE_TAG:+-PreleaseVersion=${RELEASE_TAG#v}}
+          ls -l app/build/outputs/apk/*/release/*.apk
 
       - name: Set NAME_SUFFIX
         run: |
@@ -78,7 +78,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: ${{ env.APK_PATH }}
+          path: app/build/outputs/apk/*/release/*.apk
           name: Circlet_${{ env.NAME_SUFFIX }}
 
       - name: Publish GitHub Release
@@ -88,5 +88,5 @@ jobs:
           tag_name: ${{ env.RELEASE_TAG }}
           target_commitish: ${{ github.sha }}
           name: Circlet ${{ env.RELEASE_TAG }}
-          files: ${{ env.APK_PATH }}
+          files: app/build/outputs/apk/*/release/*.apk
           generate_release_notes: true
