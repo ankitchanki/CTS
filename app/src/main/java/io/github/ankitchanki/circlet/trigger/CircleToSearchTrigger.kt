@@ -14,6 +14,7 @@ import io.github.ankitchanki.circlet.BuildConfig
 import io.github.ankitchanki.circlet.config.AppConfig
 import io.github.ankitchanki.circlet.config.TriggerService
 import io.github.ankitchanki.circlet.shizuku.ShizukuManager
+import kotlinx.coroutines.delay
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 const val LOG_TAG = BuildConfig.APP_NAME
@@ -26,12 +27,21 @@ object CircleToSearchTrigger {
             prefs.getInt(AppConfig.KEY_TRIGGER_SERVICE, AppConfig.DEFAULT_CONFIG[AppConfig.KEY_TRIGGER_SERVICE] as Int)
         )?.takeIf { it.isSupported } ?: TriggerService.VIS
 
-        val result = when (service) {
-            // The call is oneway, so a permission failure is silent: only use it when Shizuku has
-            // root, otherwise go straight to VIS.
-            TriggerService.CSService ->
-                (ShizukuManager.isRoot.value && ShizukuManager.startContextualSearch(entryPoint)) || triggerViaVis(entryPoint)
-            TriggerService.VIS -> triggerViaVis(entryPoint)
+        var result = false
+        // VIS returns false while Google's voice interaction service isn't bound yet, e.g. after
+        // the system killed the Google app in the background; the failed call starts the rebind,
+        // so a short retry usually succeeds.
+        for (attempt in 0 until ATTEMPTS) {
+            if (attempt > 0) delay(RETRY_DELAY_MS * attempt)
+            result = when (service) {
+                // The call is oneway, so a permission failure is silent: only use it when Shizuku
+                // has root, otherwise go straight to VIS.
+                TriggerService.CSService ->
+                    (ShizukuManager.isRoot.value && ShizukuManager.startContextualSearch(entryPoint)) || triggerViaVis(entryPoint)
+                TriggerService.VIS -> triggerViaVis(entryPoint)
+            }
+            if (result) break
+            Log.w(LOG_TAG, "trigger attempt ${attempt + 1} of $ATTEMPTS failed")
         }
         if (result && vibrate) {
             vibrateClick(context)
@@ -79,4 +89,7 @@ object CircleToSearchTrigger {
             Log.e(LOG_TAG, "triggerCircleToSearch vibrate failed", e)
         }
     }
+
+    private const val ATTEMPTS = 3
+    private const val RETRY_DELAY_MS = 250L
 }
